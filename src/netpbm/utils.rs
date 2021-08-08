@@ -60,5 +60,3 @@ mod tests {
         assert_eq!(128, result[1]);
     }
 }
-
-

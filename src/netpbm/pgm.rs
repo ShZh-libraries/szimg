@@ -1,8 +1,8 @@
 use crate::lib::Image;
 
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
-use std::error::Error;
 
 pub struct PGM {
     magic_number: &'static str,
@@ -27,7 +27,6 @@ impl PGM {
 impl Image for PGM {
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        
         let header = format!(
             "{magic_number}\n{width} {height}\n{max_value}\n",
             magic_number = self.magic_number,

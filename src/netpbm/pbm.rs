@@ -39,7 +39,7 @@ impl PBM {
                     height,
                     data: converted_data.iter().cloned().flatten().collect::<Vec<_>>(),
                 }
-            },
+            }
         }
     }
 }
