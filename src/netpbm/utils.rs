@@ -1,3 +1,7 @@
+pub fn byte_to_char(u8_array: &Vec<u8>) -> Vec<u8> {
+    u8_array.iter().map(|x| x + 48).collect::<Vec<u8>>()
+}
+
 // Convert u8 array to bit array
 pub fn u8_to_bits(u8_array: &Vec<u8>) -> Vec<u8> {
     let mut bits_array = Vec::with_capacity((u8_array.len() + 7) / 8);
@@ -20,7 +24,7 @@ fn to_bit(u8_slice: &[u8], calc_num: u8) -> u8 {
     let mut result = 0_u8;
     let mut index: u8 = 0;
     while index < calc_num {
-        result |= u8_slice[index as usize] << index;
+        result |= u8_slice[index as usize] << (7 - index);
         index += 1;
     }
 
@@ -44,7 +48,7 @@ mod tests {
         let u8_array: Vec<u8> = vec![0, 1];
         let result = u8_to_bits(&u8_array);
         assert_eq!(1, result.len());
-        assert_eq!(2, result[0]);
+        assert_eq!(64, result[0]);
     }
 
     #[test]
@@ -52,8 +56,8 @@ mod tests {
         let u8_array: Vec<u8> = vec![0, 0, 0, 0, 0, 0, 0, 1, 1];
         let result = u8_to_bits(&u8_array);
         assert_eq!(2, result.len());
-        assert_eq!(128, result[0]);
-        assert_eq!(1, result[1]);
+        assert_eq!(1, result[0]);
+        assert_eq!(128, result[1]);
     }
 }
 

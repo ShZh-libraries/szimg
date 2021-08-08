@@ -8,9 +8,14 @@ use crate::lib::Image;
 
 use std::error::Error;
 
-pub fn save_pbm<const WIDTH: usize, const HEIGHT: usize>(path: &str, data: [[u8; WIDTH]; HEIGHT]) -> Result<(), Box<dyn Error>> {
-    let data = data.iter().flatten().map(|x| x + 48).collect::<Vec<u8>>();
-    let pbm = PBM::new(WIDTH as u32, HEIGHT as u32, &data);
+pub enum Mode {
+    Ascii,
+    Binary,
+}
+
+pub fn save_pbm<const WIDTH: usize, const HEIGHT: usize>(path: &str, data: [[u8; WIDTH]; HEIGHT], mode: Mode) -> Result<(), Box<dyn Error>> {
+    let data = data.iter().cloned().flatten().collect::<Vec<_>>();
+    let pbm = PBM::new(WIDTH as u32, HEIGHT as u32, mode, &data);
     pbm.dump(path)
 }
 
@@ -38,7 +43,7 @@ mod tests {
             [0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0],
         ];
-        save_pbm("./image/j.pbm", bytes).unwrap();
+        save_pbm("./image/j.pbm", bytes, Mode::Binary).unwrap();
     }
 
     #[test]
