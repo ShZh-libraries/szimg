@@ -13,9 +13,9 @@ pub fn save_pbm<const WIDTH: usize, const HEIGHT: usize>(path: &str, data: [[u8;
     pbm.dump(path)
 }
 
-pub fn save_pgm<const WIDTH: usize, const HEIGHT: usize>(path: &str, data: [[u8; WIDTH]; HEIGHT]) -> Result<(), Box<dyn Error>> {
+pub fn save_pgm<const WIDTH: usize, const HEIGHT: usize>(path: &str, data: [[u8; WIDTH]; HEIGHT], max_value: u32) -> Result<(), Box<dyn Error>> {
     let data = data.iter().cloned().flatten().collect::<Vec<u8>>();
-    let pbm = PGM::new(WIDTH as u32, HEIGHT as u32, &data);
+    let pbm = PGM::new(WIDTH as u32, HEIGHT as u32, max_value, &data);
     pbm.dump(path)
 }
 
@@ -50,6 +50,6 @@ mod tests {
             [0, 3, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 0, 11, 11, 11, 11,  0,  0, 15,  0,  0,  0,  0,],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,],
         ];
-        save_pgm("./image/feep.pgm", bytes).unwrap();
+        save_pgm("./image/feep.pgm", bytes, 15).unwrap();
     }
 }

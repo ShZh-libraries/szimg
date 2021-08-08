@@ -13,12 +13,12 @@ pub struct PGM {
 }
 
 impl PGM {
-    pub fn new(width: u32, height: u32, data: &Vec<u8>) -> Self {
+    pub fn new(width: u32, height: u32, max_value: u32, data: &Vec<u8>) -> Self {
         Self {
             magic_number: "P2",
             width,
             height,
-            max_value: 15_u32,
+            max_value,
             data: data.to_vec(),
         }
     }
