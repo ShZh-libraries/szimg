@@ -1,5 +1,6 @@
 mod pbm;
 mod pgm;
+mod utils;
 
 use pbm::PBM;
 use pgm::PGM;
