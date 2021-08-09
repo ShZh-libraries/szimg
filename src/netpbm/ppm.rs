@@ -1,5 +1,5 @@
 use super::Mode;
-use crate::lib::Image;
+use crate::lib::{ Image, Serializable };
 
 use std::error::Error;
 use std::fs::File;
@@ -25,7 +25,7 @@ impl PPM {
     }
 }
 
-impl Image for PPM {
+impl Serializable for PPM {
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
@@ -68,7 +68,9 @@ impl Image for PPM {
 
         bytes
     }
+}
 
+impl Image for PPM {
     fn dump(&self, path: &str) -> Result<(), Box<dyn Error>> {
         let mut file = File::create(path)?;
         let bytes = self.get_bytes();

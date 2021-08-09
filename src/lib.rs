@@ -1,7 +1,9 @@
 use std::error::Error;
 
-pub trait Image {
+pub trait Serializable {
     fn get_bytes(&self) -> Vec<u8>;
+}
 
+pub trait Image {
     fn dump(&self, path: &str) -> Result<(), Box<dyn Error>>;
 }

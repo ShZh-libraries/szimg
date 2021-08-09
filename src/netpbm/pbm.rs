@@ -1,6 +1,6 @@
 use super::utils;
 use super::Mode;
-use crate::lib::Image;
+use crate::lib::{ Image, Serializable };
 
 use std::error::Error;
 use std::fs::File;
@@ -51,7 +51,7 @@ fn compress_bits_to_u8_array(width: u32, height: u32, bits: &Vec<u8>) -> Vec<u8>
     converted_data.iter().cloned().flatten().collect::<Vec<_>>()
 }
 
-impl Image for PBM {
+impl Serializable for PBM {
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
@@ -70,7 +70,9 @@ impl Image for PBM {
 
         bytes
     }
+}
 
+impl Image for PBM {
     fn dump(&self, path: &str) -> Result<(), Box<dyn Error>> {
         let mut file = File::create(path)?;
         let bytes = self.get_bytes();
