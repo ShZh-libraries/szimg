@@ -7,4 +7,8 @@ edition = "2018"
 name = "tiny_img"
 path = "src/lib.rs"
 
+[[example]]
+name = "mandlebrot_set"
+path = "examples/mandlebrot.rs"
+
 [dependencies]
