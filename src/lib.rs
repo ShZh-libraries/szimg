@@ -1,3 +1,7 @@
+mod netpbm;
+mod checksum;
+mod png;
+
 use std::error::Error;
 
 pub trait Serializable {

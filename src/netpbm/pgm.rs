@@ -1,5 +1,5 @@
 use super::Mode;
-use crate::lib::{ Image, Serializable};
+use crate::{ Image, Serializable};
 
 use std::error::Error;
 use std::fs::File;

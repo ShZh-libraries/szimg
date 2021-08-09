@@ -1,4 +1,4 @@
-use crate::lib::{ Image, Serializable };
+use crate::{ Image, Serializable };
 
 use std::fs::File;
 use std::io::Write;

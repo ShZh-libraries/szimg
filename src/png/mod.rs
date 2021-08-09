@@ -1,6 +1,6 @@
 mod png;
 
-use crate::lib::Image;
+use crate::Image;
 use png::PNG;
 
 use std::error::Error;

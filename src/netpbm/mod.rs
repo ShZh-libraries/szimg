@@ -3,7 +3,7 @@ mod pgm;
 mod ppm;
 mod utils;
 
-use crate::lib::Image;
+use crate::Image;
 use pbm::PBM;
 use pgm::PGM;
 use ppm::PPM;
