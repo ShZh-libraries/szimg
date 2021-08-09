@@ -11,4 +11,8 @@ path = "src/lib.rs"
 name = "mandlebrot_set"
 path = "examples/mandlebrot.rs"
 
+[[example]]
+name = "julia_set"
+path = "examples/julia.rs"
+
 [dependencies]
