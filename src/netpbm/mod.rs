@@ -26,10 +26,11 @@ pub fn save_pbm<const WIDTH: usize, const HEIGHT: usize>(
 pub fn save_pgm<const WIDTH: usize, const HEIGHT: usize>(
     path: &str,
     data: [[u8; WIDTH]; HEIGHT],
-    max_value: u32,
+    max_value: u8,
+    mode: Mode
 ) -> Result<(), Box<dyn Error>> {
-    let data = data.iter().cloned().flatten().collect::<Vec<u8>>();
-    let pbm = PGM::new(WIDTH as u32, HEIGHT as u32, max_value, &data);
+    let data = data.iter().cloned().flatten().collect::<Vec<_>>();
+    let pbm = PGM::new(WIDTH as u32, HEIGHT as u32, max_value, mode, &data);
     pbm.dump(path)
 }
 
@@ -76,6 +77,6 @@ mod tests {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ],
         ];
-        save_pgm("./image/feep.pgm", bytes, 15).unwrap();
+        save_pgm("./image/feep.pgm", bytes, 15, Mode::Binary).unwrap();
     }
 }

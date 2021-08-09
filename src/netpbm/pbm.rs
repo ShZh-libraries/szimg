@@ -29,6 +29,7 @@ impl PBM {
                     let row_start = index * (width as usize);
                     let row_end = std::cmp::min(row_start + width as usize, data.len());
                     let line = &data[row_start..row_end].to_vec();
+                    // Extra bits are added at the end of each row to fill a whole byte
                     let bytes = utils::u8_to_bits(line);
                     converted_data.push(bytes);
                     index += 1;
