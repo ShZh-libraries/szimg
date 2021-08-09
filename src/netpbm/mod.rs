@@ -30,7 +30,7 @@ pub fn save_pgm<const WIDTH: usize, const HEIGHT: usize>(
     mode: Mode
 ) -> Result<(), Box<dyn Error>> {
     let data = data.iter().cloned().flatten().collect::<Vec<_>>();
-    let pbm = PGM::new(WIDTH as u32, HEIGHT as u32, max_value, mode, &data);
+    let pbm = PGM::new(mode, WIDTH as u32, HEIGHT as u32, max_value, &data);
     pbm.dump(path)
 }
 
