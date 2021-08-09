@@ -1,5 +1,5 @@
-use tiny_img::netpbm::{ save_ppm, Mode};
-use std::ops::{ Add, Mul };
+use std::ops::{Add, Mul};
+use tiny_img::netpbm::{save_ppm, Mode};
 
 #[derive(Debug, Clone, Copy)]
 struct Complex {
