@@ -1,6 +1,7 @@
 mod netpbm;
 mod checksum;
 mod png;
+mod jpg;
 
 use std::error::Error;
 
