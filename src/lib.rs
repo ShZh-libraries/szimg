@@ -1,7 +1,7 @@
-mod netpbm;
 mod checksum;
-mod png;
-mod jpg;
+pub mod netpbm;
+pub mod png;
+pub mod jpg;
 
 use std::error::Error;
 
