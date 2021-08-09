@@ -1,42 +1,7 @@
-use std::ops::{Add, Mul};
+mod complex;
+
+use complex::Complex;
 use tiny_img::netpbm::{save_ppm, Mode};
-
-#[derive(Debug, Clone, Copy)]
-struct Complex {
-    real: f64,
-    imaginary: f64,
-}
-
-impl Mul for Complex {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        Self {
-            real: self.real * rhs.real - self.imaginary * rhs.imaginary,
-            imaginary: self.real * rhs.imaginary + self.imaginary * rhs.real,
-        }
-    }
-}
-
-impl Add for Complex {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            real: self.real + rhs.real,
-            imaginary: self.imaginary + rhs.imaginary,
-        }
-    }
-}
-
-impl Complex {
-    fn conjugate(&self) -> Self {
-        Self {
-            real: self.real,
-            imaginary: -self.imaginary,
-        }
-    }
-}
 
 fn iter(c: Complex) -> u8 {
     let mut z = c.clone();
