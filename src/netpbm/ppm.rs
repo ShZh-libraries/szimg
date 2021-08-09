@@ -60,7 +60,7 @@ impl Serializable for PPM {
                 let pixels = self
                     .data
                     .iter()
-                    .map(|x| x * (256 / (self.max_value + 1) as u16) as u8)
+                    .map(|x| x * (256 / (self.max_value as u16 + 1)) as u8)
                     .collect::<Vec<_>>();
                 bytes.extend(pixels);
             }
