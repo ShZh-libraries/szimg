@@ -1,10 +1,12 @@
 mod pbm;
 mod pgm;
+mod ppm;
 mod utils;
 
 use crate::lib::Image;
 use pbm::PBM;
 use pgm::PGM;
+use ppm::PPM;
 
 use std::error::Error;
 
@@ -31,6 +33,17 @@ pub fn save_pgm<const WIDTH: usize, const HEIGHT: usize>(
 ) -> Result<(), Box<dyn Error>> {
     let data = data.iter().cloned().flatten().collect::<Vec<_>>();
     let pbm = PGM::new(mode, WIDTH as u32, HEIGHT as u32, max_value, &data);
+    pbm.dump(path)
+}
+
+pub fn save_ppm<const WIDTH: usize, const HEIGHT: usize>(
+    path: &str,
+    data: [[[u8; 3]; WIDTH]; HEIGHT],
+    max_value: u8,
+    mode: Mode
+) -> Result<(), Box<dyn Error>> {
+    let data = data.iter().cloned().flatten().flatten().collect::<Vec<_>>();
+    let pbm = PPM::new(mode, WIDTH as u32, HEIGHT as u32, max_value, &data);
     pbm.dump(path)
 }
 
@@ -78,5 +91,15 @@ mod tests {
             ],
         ];
         save_pgm("./image/feep.pgm", bytes, 15, Mode::Binary).unwrap();
+    }
+
+    #[test]
+    fn test_save_ppm() {
+        let bytes = [
+            [[255, 0, 0], [0, 0, 255], [0, 0, 255]],
+            [[255, 255, 0], [255, 255, 255], [0, 0, 0]],
+        ];
+
+        save_ppm("./image/6_colors.ppm", bytes, 255, Mode::Ascii).unwrap();
     }
 }
