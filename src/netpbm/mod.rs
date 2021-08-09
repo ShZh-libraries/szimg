@@ -29,7 +29,7 @@ pub fn save_pgm<const WIDTH: usize, const HEIGHT: usize>(
     path: &str,
     data: [[u8; WIDTH]; HEIGHT],
     max_value: u8,
-    mode: Mode
+    mode: Mode,
 ) -> Result<(), Box<dyn Error>> {
     let data = data.iter().cloned().flatten().collect::<Vec<_>>();
     let pbm = PGM::new(mode, WIDTH as u32, HEIGHT as u32, max_value, &data);
@@ -40,7 +40,7 @@ pub fn save_ppm<const WIDTH: usize, const HEIGHT: usize>(
     path: &str,
     data: [[[u8; 3]; WIDTH]; HEIGHT],
     max_value: u8,
-    mode: Mode
+    mode: Mode,
 ) -> Result<(), Box<dyn Error>> {
     let data = data.iter().cloned().flatten().flatten().collect::<Vec<_>>();
     let pbm = PPM::new(mode, WIDTH as u32, HEIGHT as u32, max_value, &data);
