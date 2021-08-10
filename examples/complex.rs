@@ -1,14 +1,39 @@
-use std::ops::{Add, Mul};
+use std::ops::{Add, Sub, Mul, Div};
 
-#[derive(Debug, Clone, Copy)]
-pub struct Complex {
+#[derive(PartialEq, Clone, Copy)]
+pub struct Complex{
     pub real: f64,
     pub imaginary: f64,
+}
+
+impl Add for Complex {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            real: self.real + rhs.real,
+            imaginary: self.imaginary + rhs.imaginary,
+        }
+    }
+}
+
+impl Sub for Complex {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            real: self.real - rhs.real,
+            imaginary: self.imaginary - rhs.imaginary,
+        }
+    }
 }
 
 impl Mul for Complex {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rhs: Self) -> Self {
         Self {
             real: self.real * rhs.real - self.imaginary * rhs.imaginary,
@@ -17,13 +42,14 @@ impl Mul for Complex {
     }
 }
 
-impl Add for Complex {
+impl Div for Complex {
     type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
+    
+    #[inline]
+    fn div(self, rhs: Self) -> Self {
         Self {
-            real: self.real + rhs.real,
-            imaginary: self.imaginary + rhs.imaginary,
+            real: self.real / rhs.real,
+            imaginary: self.imaginary / rhs.imaginary,
         }
     }
 }
@@ -41,4 +67,5 @@ impl Complex {
     }
 }
 
+// Only to make cargo happy
 fn main() {}
