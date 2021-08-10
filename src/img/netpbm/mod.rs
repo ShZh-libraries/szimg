@@ -4,11 +4,11 @@ mod ppm;
 mod pam;
 mod utils;
 
-use crate::Image;
+use super::{Image, Serializable};
 use pbm::PBM;
 use pgm::PGM;
 use ppm::PPM;
-use pam::{ PAM, TupleType };
+use pam::{PAM, TupleType};
 
 use std::error::Error;
 

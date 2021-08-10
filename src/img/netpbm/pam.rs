@@ -1,4 +1,4 @@
-use crate::{Image, Serializable};
+use super::{Image, Serializable};
 
 #[derive(PartialEq)]
 pub enum TupleType {

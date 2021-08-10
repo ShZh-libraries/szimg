@@ -1,6 +1,6 @@
 mod png;
 
-use crate::Image;
+use super::{Image, Serializable};
 use png::PNG;
 
 use std::error::Error;

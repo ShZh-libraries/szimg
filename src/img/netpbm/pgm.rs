@@ -1,7 +1,7 @@
 use super::Mode;
-use crate::{ Image, Serializable };
+use super::{Image, Serializable};
 
-pub struct PPM {
+pub struct PGM {
     mode: Mode,
     width: u32,
     height: u32,
@@ -9,7 +9,7 @@ pub struct PPM {
     data: Vec<u8>,
 }
 
-impl PPM {
+impl PGM {
     pub fn new(mode: Mode, width: u32, height: u32, max_value: u8, data: &Vec<u8>) -> Self {
         Self {
             mode,
@@ -21,7 +21,7 @@ impl PPM {
     }
 }
 
-impl Serializable for PPM {
+impl Serializable for PGM {
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
@@ -29,7 +29,7 @@ impl Serializable for PPM {
             Mode::Ascii => {
                 let header = format!(
                     "{magic_number}\n{width} {height}\n{max_value}\n",
-                    magic_number = "P3",
+                    magic_number = "P2",
                     width = self.width,
                     height = self.height,
                     max_value = self.max_value
@@ -46,19 +46,19 @@ impl Serializable for PPM {
             Mode::Binary => {
                 let header = format!(
                     "{magic_number}\n{width} {height}\n{max_value}\n",
-                    magic_number = "P6",
+                    magic_number = "P5",
                     width = self.width,
                     height = self.height,
                     max_value = self.max_value
                 );
                 bytes.extend(header.bytes());
-                // Map the pixel value from [0, max_value] to [0, 255]
-                let pixels = self
+                // Map the gray value from [0, max_value] to [0, 255]
+                let grays = self
                     .data
                     .iter()
-                    .map(|x| x * (256 / (self.max_value as u16 + 1)) as u8)
+                    .map(|x| x * (256 / (self.max_value as u16 + 1) as u16) as u8)
                     .collect::<Vec<_>>();
-                bytes.extend(pixels);
+                bytes.extend(grays);
             }
         }
 
@@ -66,4 +66,4 @@ impl Serializable for PPM {
     }
 }
 
-impl Image for PPM {}
+impl Image for PGM {}

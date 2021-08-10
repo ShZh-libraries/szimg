@@ -1,5 +1,6 @@
-mod checksum;
-pub mod img;
+pub mod netpbm;
+pub mod png;
+pub mod jpg;
 
 use std::error::Error;
 use std::fs::File;

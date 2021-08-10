@@ -1,6 +1,6 @@
 use super::utils;
 use super::Mode;
-use crate::{ Image, Serializable };
+use super::{Image, Serializable};
 
 pub struct PBM {
     mode: Mode,
