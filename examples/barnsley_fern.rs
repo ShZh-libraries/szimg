@@ -16,10 +16,7 @@ fn create_barnsley_fern() -> [[[u8; 3]; 600]; 600] {
 
     let (mut x, mut y) = (0., 0.);
     for _ in 0..100000 {
-        if x > 3. {
-            println!("{} {}", x, y);
-        }
-        let plot_x = 50. * x + 300.;
+        let plot_x = 80. * x + 300.;
         let plot_y = 600. - (50. * y + 50.);
         data[plot_y as usize][plot_x as usize][1] = 255;
 
