@@ -1,9 +1,5 @@
 use crate::{Image, Serializable};
 
-use std::error::Error;
-use std::fs::File;
-use std::io::Write;
-
 #[derive(PartialEq)]
 pub enum TupleType {
     BlackAndWhite,
@@ -100,11 +96,4 @@ impl Serializable for PAM {
     }
 }
 
-impl Image for PAM {
-    fn dump(&self, path: &str) -> Result<(), Box<dyn Error>> {
-        let mut file = File::create(path)?;
-        let bytes = self.get_bytes();
-        file.write(&bytes)?;
-        Ok(())
-    }
-}
+impl Image for PAM {}

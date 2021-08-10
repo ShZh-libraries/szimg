@@ -1,10 +1,6 @@
 use super::Mode;
 use crate::{ Image, Serializable};
 
-use std::error::Error;
-use std::fs::File;
-use std::io::Write;
-
 pub struct PGM {
     mode: Mode,
     width: u32,
@@ -70,11 +66,4 @@ impl Serializable for PGM {
     }
 }
 
-impl Image for PGM {
-    fn dump(&self, path: &str) -> Result<(), Box<dyn Error>> {
-        let mut file = File::create(path)?;
-        let bytes = self.get_bytes();
-        file.write(&bytes)?;
-        Ok(())
-    }
-}
+impl Image for PGM {}
