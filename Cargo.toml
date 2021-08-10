@@ -15,4 +15,9 @@ path = "examples/mandlebrot.rs"
 name = "julia_set"
 path = "examples/julia.rs"
 
+[[example]]
+name = "barnsley_fern"
+path = "examples/barnsley_fern.rs"
+
 [dependencies]
+rand = "0.8.4"
