@@ -26,7 +26,7 @@ fn create_barnsley_fern() -> [[[u8; 3]; WIDTH]; HEIGHT] {
             80. * pair.0 + WIDTH as f32 / 2.,
             HEIGHT as f32 - (50. * pair.1 + 50.),
         );
-        data[pos.0 as usize][pos.1 as usize][1] = 255;
+        data[pos.1 as usize][pos.0 as usize][1] = 255;
 
         pair = iter(&mut rng, &pair);
     }
