@@ -34,13 +34,13 @@ type `cargo run --example <example_name>` in your terminal to see these example 
   </tr>
   <tr>
     <td align="center">
-      <a herf="./examples/mandlebrot.rs">mandlebrot</a>
+      <a href="./examples/mandlebrot.rs">mandlebrot</a>
     </td>
     <td align="center">
-      <a herf="./examples/julia.rs">julia_set</a>
+      <a href="./examples/julia.rs">julia_set</a>
     </td>
     <td align="center">
-      <a herf="./examples/barnsley_fern.rs">barnsley_fern</a>
+      <a href="./examples/barnsley_fern.rs">barnsley_fern</a>
     </td>
   </tr>
 </table>
