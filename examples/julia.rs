@@ -62,5 +62,5 @@ fn create_julia() -> [[[u8; 3]; WIDTH]; HEIGHT] {
 
 fn main() {
     let data = create_julia();
-    save_ppm("./image/mandlebrot.ppm", data, 255, Mode::Binary).unwrap();
+    save_ppm("./image/julia_set.ppm", data, 255, Mode::Binary).unwrap();
 }
