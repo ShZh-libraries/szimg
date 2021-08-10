@@ -3,11 +3,22 @@ mod complex;
 use complex::Complex;
 use tiny_img::netpbm::{save_ppm, Mode};
 
-fn iter(c: Complex) -> u8 {
-    let mut z = c.clone();
+const WIDTH: usize = 1000;
+const HEIGHT: usize = 1000;
 
+const SCALED_X: f64 = 2.48 / 999.;
+const SCALED_Y: f64 = 2.26 / 999.;
+const OFFSET_X: f64 = -2.;
+const OFFSET_Y: f64 = -1.13;
+
+const MAX_ITER_TIME: u8 = 50;
+const THRESHOLD: f64 = 4.;
+
+// f(z) = z ^ 2 + c
+fn iter(c: Complex) -> u8 {
+    let mut z = c;
     let mut iter_time = 1;
-    while iter_time < 50 && (z * z.conjugate()).real < 4.0 {
+    while iter_time < MAX_ITER_TIME && z.get_length() < THRESHOLD {
         z = z * z + c;
         iter_time += 1;
     }
@@ -15,26 +26,22 @@ fn iter(c: Complex) -> u8 {
     iter_time
 }
 
-fn create_mandlebrot() -> [[[u8; 3]; 1000]; 1000] {
-    let mut res = [[[0; 3]; 1000]; 1000];
+// See https://en.wikipedia.org/wiki/Mandelbrot_set for more details
+fn create_mandlebrot() -> [[[u8; 3]; WIDTH]; HEIGHT] {
+    let mut res = [[[0; 3]; WIDTH]; HEIGHT];
 
-    let mx = 2.48 / 999.0;
-    let my = 2.26 / 999.0;
-
-    let mut x = 0;
-    while x < 1000 {
-        let mut y = 0;
-        while y < 1000 {
+    // Cache friendly loop
+    for y in 0..HEIGHT {
+        for x in 0..WIDTH {
             let temp = Complex {
-                real: mx * x as f64 - 2.0,
-                imaginary: my * y as f64 - 1.13,
+                real: SCALED_X * x as f64 + OFFSET_X,
+                imaginary: SCALED_Y * y as f64 + OFFSET_Y,
             };
             let iter_time = iter(temp);
+            // Magic number 5 is to map [0, 50] to [0, 250](almost 255)
+            // That's to reduce CPU's budern
             res[y][x][2] = iter_time * 5;
-
-            y += 1;
         }
-        x += 1;
     }
 
     res
