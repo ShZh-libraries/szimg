@@ -22,11 +22,9 @@ pub fn u8_to_bits(u8_array: &Vec<u8>) -> Vec<u8> {
 
 fn to_bit(u8_slice: &[u8], calc_num: u8) -> u8 {
     let mut result = 0_u8;
-    let mut index: u8 = 0;
     // First byte is the most significant
-    while index < calc_num {
+    for index in 0..calc_num {
         result |= u8_slice[index as usize] << (7 - index);
-        index += 1;
     }
 
     result

@@ -36,16 +36,15 @@ impl PBM {
 
 // Compress byte to bit sequence
 fn compress_bits_to_u8_array(width: u32, height: u32, bits: &Vec<u8>) -> Vec<u8> {
-    let mut index: usize = 0;
     let mut converted_data = Vec::new();
-    while (index as u32) < height {
+    for index in 0..height {
+        let index = index as usize;
         let row_start = index * (width as usize);
         let row_end = std::cmp::min(row_start + width as usize, bits.len());
         let line = &bits[row_start..row_end].to_vec();
         // Extra bits are added at the end of each row to fill a whole byte
         let bytes = utils::u8_to_bits(line);
         converted_data.push(bytes);
-        index += 1;
     }
 
     converted_data.iter().cloned().flatten().collect::<Vec<_>>()
