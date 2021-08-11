@@ -1,10 +1,10 @@
-use super::{ Image, Serializable };
+use super::{Image, Serializable};
 
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
-use std::error::Error;
 
-use crate::checksum::{ adler::AdlerIterator, crc, ChecksumIterator };
+use crate::checksum::{adler::AdlerIterator, crc, ChecksumIterator};
 
 pub struct PNG {
     magic_number: [u8; 8],
