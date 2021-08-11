@@ -1,9 +1,5 @@
 use super::{Image, Serializable};
 
-use std::error::Error;
-use std::fs::File;
-use std::io::Write;
-
 use crate::checksum::{adler::AdlerIterator, crc, ChecksumIterator};
 
 pub struct PNG {
@@ -87,14 +83,7 @@ impl Serializable for PNG {
     }
 }
 
-impl Image for PNG {
-    fn dump(&self, path: &str) -> Result<(), Box<dyn Error>> {
-        let bytes = self.get_bytes();
-        let mut file = File::create(path)?;
-        file.write(&bytes)?;
-        Ok(())
-    }
-}
+impl Image for PNG {}
 
 impl<T> Serializable for Chunk<T>
 where
