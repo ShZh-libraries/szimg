@@ -21,3 +21,4 @@ path = "examples/barnsley_fern.rs"
 
 [dependencies]
 rand = "0.8.4"
+lazy_static = "1.4.0"
