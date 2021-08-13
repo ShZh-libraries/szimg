@@ -1,6 +1,7 @@
 mod dct;
 mod quant;
 mod huffman;
+mod rle;
 mod jpeg;
 
 use super::{Serializable, Image};

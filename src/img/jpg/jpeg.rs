@@ -1,12 +1,13 @@
 use super::{Serializable, Image};
 
 use super::quant::QUANT_TABLE;
-use super::huffman::{LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC, encode, Bits};
+use super::huffman::{LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC};
 use super::quant::quant;
 use super::dct::get_dct;
+use super::rle::{encode, Bits};
 
 // Pre-defxined zig-zag order index for array
-const zig_zag_order: [usize; 64] = [
+const ZIG_ZAG_ORDER: [usize; 64] = [
     0, 1, 8, 16, 9, 2, 3, 10,
 	17, 24, 32, 25, 18, 11, 4, 5,
 	12, 19, 26, 33, 40, 48, 41, 34,
@@ -46,9 +47,6 @@ impl<T> Serializable for Segment<T> where T: Payload {
         bytes
     }
 }
-
-// Start Of Image
-type SOI = ();
 
 // Quantization tables
 struct DQT {}
@@ -169,7 +167,6 @@ impl Serializable for SOS {
         // Deal with last byte
         let (last_byte, is_complete) = bits.complete();
         if !is_complete {
-            println!("{}", last_byte);
             bytes.push(last_byte);
         }
 
@@ -200,13 +197,11 @@ fn to_zig_zag(array: [f64; 64]) -> [f64; 64] {
     let mut result = [0.; 64];
 
     for index in 0..64 {
-        result[index] = array[zig_zag_order[index]];
+        result[index] = array[ZIG_ZAG_ORDER[index]];
     }
 
     result
 }
-
-type EOI = ();
 
 pub struct JPEG {
     // start_of_image: Segment<SOI>
