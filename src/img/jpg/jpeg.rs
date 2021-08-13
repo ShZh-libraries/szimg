@@ -18,12 +18,101 @@ const ZIG_ZAG_ORDER: [usize; 64] = [
 	53, 60, 61, 54, 47, 55, 62, 63,
 ];
 
+pub struct JPEG {
+    // start_of_image: Segment<SOI>
+    quant_tables: Segment<DQT>,
+    start_of_frame0: Segment<SOF0>,
+    huffman_tables: Segment<DHT>,
+    image_data: Segment<SOS>,
+    // end_of_image: Segment<EOI>
+}
+
 struct Segment<T: Payload> {
     marker: [u8; 2],
-    // Some segment only have marker header
     // length: Option<u16>,     // This field can be deduced by payload
     payload: Option<T>,
 }
+
+// Quantization tables
+struct DQT {
+    // The following field is imported from `quant` module
+    // quant_table: [[[u8; 8]; 8]; 2]
+}
+
+// TODO: RGB
+struct SOF0 {
+    depth: u8,
+    width: u16,
+    height: u16,
+    channel: u8,
+}
+
+// Huffman tables
+// TODO: RGB
+struct DHT {
+    channel: u8,
+    // The following field is imported from `huffman` module
+    // huffman_tables: [HuffmanSpec]
+}
+
+// Start Of Scanning
+// TODO: Remove redudant fields
+struct SOS {
+    width: u16,
+    height: u16,
+    data: Vec<u8>,
+}
+
+impl JPEG {
+    pub fn new(width: u16, height: u16, data: &Vec<u8>) -> Self {
+        Self {
+            quant_tables: Segment {
+                marker: [0xff, 0xdb],
+                payload: Some(DQT {}),
+            },
+            start_of_frame0: Segment {
+                marker: [0xff, 0xc0],
+                payload: Some(SOF0 {
+                    depth: 8,
+                    width,
+                    height,
+                    channel: 1,
+                }),
+            },
+            huffman_tables: Segment {
+                marker: [0xff, 0xc4],
+                payload: Some(DHT { channel: 1 }),
+            },
+            image_data: Segment {
+                marker: [0xff, 0xda],
+                payload: Some(SOS {
+                    width,
+                    height,
+                    data: data.to_vec(),
+                }),
+            },
+        }
+    }
+}
+
+impl Serializable for JPEG {
+    fn get_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        // SOI marker
+        bytes.extend([0xff, 0xd8]);
+        bytes.extend(self.quant_tables.get_bytes());
+        bytes.extend(self.start_of_frame0.get_bytes());
+        bytes.extend(self.huffman_tables.get_bytes());
+        bytes.extend(self.image_data.get_bytes());
+        // EOI marker
+        bytes.extend([0xff, 0xd9]);
+
+        bytes
+    }
+}
+
+impl Image for JPEG {}
 
 trait Payload: Serializable {
     fn get_length(&self) -> u16;
@@ -42,16 +131,12 @@ where
             // Marker length
             let length = payload.get_length() + 2; // include length's own space(2 byte) as well
             bytes.extend(length.to_be_bytes()); // High byte first
-            // Effective data
-            bytes.extend(payload.get_bytes());
+            bytes.extend(payload.get_bytes());  // Effective data
         }
 
         bytes
     }
 }
-
-// Quantization tables
-struct DQT {}
 
 impl Serializable for DQT {
     fn get_bytes(&self) -> Vec<u8> {
@@ -77,14 +162,6 @@ impl Payload for DQT {
     }
 }
 
-// TODO: RGB
-struct SOF0 {
-    depth: u8,
-    width: u16,
-    height: u16,
-    channel: u8,
-}
-
 impl Serializable for SOF0 {
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
@@ -105,12 +182,6 @@ impl Payload for SOF0 {
     fn get_length(&self) -> u16 {
         6 + 3
     }
-}
-
-// Huffman tables
-// TODO: RGB
-struct DHT {
-    channel: u8,
 }
 
 impl Serializable for DHT {
@@ -136,13 +207,6 @@ impl Payload for DHT {
         (1 + 16 + LUMINANCE_DC_SPEC.value.len() as u16)
             + (1 + 16 + LUMINANCE_AC_SPEC.value.len() as u16)
     }
-}
-
-// Start Of Scanning
-struct SOS {
-    width: u16,
-    height: u16,
-    data: Vec<u8>,
 }
 
 impl Serializable for SOS {
@@ -206,63 +270,3 @@ fn to_zig_zag(array: [f64; 64]) -> [f64; 64] {
 
     result
 }
-
-pub struct JPEG {
-    // start_of_image: Segment<SOI>
-    quant_tables: Segment<DQT>,
-    start_of_frame0: Segment<SOF0>,
-    huffman_tables: Segment<DHT>,
-    image_data: Segment<SOS>,
-    // end_of_image: Segment<EOI>
-}
-
-impl JPEG {
-    pub fn new(width: u16, height: u16, data: &Vec<u8>) -> Self {
-        Self {
-            quant_tables: Segment {
-                marker: [0xff, 0xdb],
-                payload: Some(DQT {}),
-            },
-            start_of_frame0: Segment {
-                marker: [0xff, 0xc0],
-                payload: Some(SOF0 {
-                    depth: 8,
-                    width,
-                    height,
-                    channel: 1,
-                }),
-            },
-            huffman_tables: Segment {
-                marker: [0xff, 0xc4],
-                payload: Some(DHT { channel: 1 }),
-            },
-            image_data: Segment {
-                marker: [0xff, 0xda],
-                payload: Some(SOS {
-                    width,
-                    height,
-                    data: data.to_vec(),
-                }),
-            },
-        }
-    }
-}
-
-impl Serializable for JPEG {
-    fn get_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-
-        // SOI marker
-        bytes.extend([0xff, 0xd8]);
-        bytes.extend(self.quant_tables.get_bytes());
-        bytes.extend(self.start_of_frame0.get_bytes());
-        bytes.extend(self.huffman_tables.get_bytes());
-        bytes.extend(self.image_data.get_bytes());
-        // EOI marker
-        bytes.extend([0xff, 0xd9]);
-
-        bytes
-    }
-}
-
-impl Image for JPEG {}
