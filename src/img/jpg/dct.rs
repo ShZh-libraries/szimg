@@ -1,5 +1,5 @@
 pub fn get_dct(g: [i32; 64]) -> [f64; 64] {
-    let mut result = [0.;  64];    
+    let mut result = [0.; 64];
     // Phase 1
     let mut temp = g;
     for u in 0..8 {

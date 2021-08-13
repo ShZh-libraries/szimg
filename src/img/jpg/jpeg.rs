@@ -1,9 +1,9 @@
-use super::{Serializable, Image};
+use super::{Image, Serializable};
 
-use super::quant::QUANT_TABLE;
+use super::dct::get_dct;
 use super::huffman::{LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC};
 use super::quant::quant;
-use super::dct::get_dct;
+use super::quant::QUANT_TABLE;
 use super::rle::{encode, Bits};
 
 // Pre-defxined zig-zag order index for array
@@ -29,7 +29,10 @@ trait Payload: Serializable {
     fn get_length(&self) -> u16;
 }
 
-impl<T> Serializable for Segment<T> where T: Payload {
+impl<T> Serializable for Segment<T>
+where
+    T: Payload,
+{
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
@@ -37,9 +40,8 @@ impl<T> Serializable for Segment<T> where T: Payload {
         bytes.extend(self.marker);
         if let Some(payload) = &self.payload {
             // Marker length
-            let length = payload.get_length() + 2;  // include length's own space(2 byte) as well
-            bytes.extend(length.to_be_bytes());     // High byte first   
-        
+            let length = payload.get_length() + 2; // include length's own space(2 byte) as well
+            bytes.extend(length.to_be_bytes()); // High byte first
             // Effective data
             bytes.extend(payload.get_bytes());
         }
@@ -132,7 +134,7 @@ impl Payload for DHT {
         // 1: header
         // 16: count array length
         (1 + 16 + LUMINANCE_DC_SPEC.value.len() as u16)
-        + (1 + 16 + LUMINANCE_AC_SPEC.value.len() as u16)
+            + (1 + 16 + LUMINANCE_AC_SPEC.value.len() as u16)
     }
 }
 
@@ -153,7 +155,7 @@ impl Serializable for SOS {
         // Process every block
         for start_y in (0..self.height).step_by(8) {
             for start_x in (0..self.width).step_by(8) {
-                let block = get_block(&self, start_x as usize , start_y as usize);
+                let block = get_block(&self, start_x as usize, start_y as usize);
                 // DCT -> ZigZag -> Quantization -> Huffman
                 let dct = get_dct(block);
                 let zig_zag = to_zig_zag(dct);
@@ -175,7 +177,9 @@ impl Serializable for SOS {
 }
 
 impl Payload for SOS {
-    fn get_length(&self) -> u16 { 6 }
+    fn get_length(&self) -> u16 {
+        6
+    }
 }
 
 fn get_block(image: &SOS, start_x: usize, start_y: usize) -> [i32; 64] {
@@ -186,7 +190,7 @@ fn get_block(image: &SOS, start_x: usize, start_y: usize) -> [i32; 64] {
         for x in 0..8 {
             let offset_y = std::cmp::min(start_y + y, image.height as usize);
             let offset_x = std::cmp::min(start_x + x, image.width as usize);
-            block[y * 8 + x] = image.data[offset_y * image.width as usize+ offset_x] as i32;
+            block[y * 8 + x] = image.data[offset_y * image.width as usize + offset_x] as i32;
         }
     }
 
@@ -217,7 +221,7 @@ impl JPEG {
         Self {
             quant_tables: Segment {
                 marker: [0xff, 0xdb],
-                payload: Some(DQT{}),
+                payload: Some(DQT {}),
             },
             start_of_frame0: Segment {
                 marker: [0xff, 0xc0],
@@ -225,14 +229,12 @@ impl JPEG {
                     depth: 8,
                     width,
                     height,
-                    channel: 1
-                })
+                    channel: 1,
+                }),
             },
             huffman_tables: Segment {
                 marker: [0xff, 0xc4],
-                payload: Some(DHT {
-                    channel: 1
-                })
+                payload: Some(DHT { channel: 1 }),
             },
             image_data: Segment {
                 marker: [0xff, 0xda],
@@ -240,7 +242,7 @@ impl JPEG {
                     width,
                     height,
                     data: data.to_vec(),
-                })
+                }),
             },
         }
     }

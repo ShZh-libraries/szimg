@@ -1,10 +1,10 @@
 mod dct;
-mod quant;
 mod huffman;
-mod rle;
 mod jpeg;
+mod quant;
+mod rle;
 
-use super::{Serializable, Image};
+use super::{Image, Serializable};
 use jpeg::JPEG;
 
 use std::error::Error;

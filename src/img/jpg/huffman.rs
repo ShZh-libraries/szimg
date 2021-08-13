@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 pub struct HuffmanSpec {
     pub count: [u8; 16],
-    pub value: Vec<u8>
+    pub value: Vec<u8>,
 }
 
 // JPEG general purpose hash table
@@ -15,7 +15,6 @@ lazy_static! {
         count: [0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
         value: vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     };
-
     pub static ref LUMINANCE_AC_SPEC: HuffmanSpec = HuffmanSpec {
         count: [0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125],
         value: vec![
@@ -42,12 +41,10 @@ lazy_static! {
 			0xf9, 0xfa,
         ],
     };
-
     pub static ref CHROMINANCE_DC_SPEC: HuffmanSpec = HuffmanSpec {
         count: [0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
         value: vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     };
-
     pub static ref CHROMINANCE_AC_SPEC: HuffmanSpec = HuffmanSpec {
         count: [0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119],
         value: vec![
@@ -74,7 +71,6 @@ lazy_static! {
 			0xf9, 0xfa,
         ],
     };
-
     pub static ref LUMINANCE_DC_TABLE: HashMap<u8, Bits> = {
         let mut table = HashMap::new();
         table.insert(0, Bits::new(2, 0b00));
@@ -92,7 +88,6 @@ lazy_static! {
 
         table
     };
-
     pub static ref CHROMINANCE_DC_TABLE: HashMap<u8, Bits> = {
         let mut table = HashMap::new();
         table.insert(0, Bits::new(2, 0b00));
@@ -110,7 +105,6 @@ lazy_static! {
 
         table
     };
-
     pub static ref LUMINANCE_AC_TABLE: HashMap<u8, Bits> = {
         let mut table = HashMap::new();
 
@@ -279,7 +273,6 @@ lazy_static! {
 
         table
     };
-
     pub static ref CHROMINANCE_AC_TABLE: HashMap<u8, Bits> = {
         let mut table = HashMap::new();
 

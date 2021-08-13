@@ -39,12 +39,12 @@ lazy_static! {
     };
 }
 
-
 pub fn quant(g: [f64; 64]) -> ([i32; 64], i32) {
     let mut result = [0_i32; 64];
     for j in 0..8 {
         for k in 0..8 {
-            result[j * 8 + k] = (g[j * 8 + k] as f64 / (QUANT_TABLE[0][j][k] as i32) as f64).round() as i32;
+            result[j * 8 + k] =
+                (g[j * 8 + k] as f64 / (QUANT_TABLE[0][j][k] as i32) as f64).round() as i32;
         }
     }
 

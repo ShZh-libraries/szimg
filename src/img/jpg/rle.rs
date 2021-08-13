@@ -1,4 +1,4 @@
-use super::huffman::{LUMINANCE_DC_TABLE, LUMINANCE_AC_TABLE};
+use super::huffman::{LUMINANCE_AC_TABLE, LUMINANCE_DC_TABLE};
 
 use std::fmt;
 use std::ops::{Add, AddAssign};
@@ -13,8 +13,8 @@ pub struct Bits {
 
 impl Bits {
     pub fn new(length: u8, bits: u32) -> Self {
-        Self { 
-            length, 
+        Self {
+            length,
             bits: to_highest_pos(length, bits),
         }
     }
@@ -47,7 +47,7 @@ impl Add for Bits {
     fn add(self, rhs: Self) -> Self {
         Self {
             length: self.length + rhs.length,
-            bits: self.bits | (rhs.bits >> self.length)
+            bits: self.bits | (rhs.bits >> self.length),
         }
     }
 }
@@ -56,14 +56,18 @@ impl AddAssign for Bits {
     fn add_assign(&mut self, rhs: Bits) {
         *self = Self {
             length: self.length + rhs.length,
-            bits: self.bits | (rhs.bits >> self.length)
+            bits: self.bits | (rhs.bits >> self.length),
         }
     }
 }
 
 impl fmt::Display for Bits {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Bits {{ length: {:?}, bits: {:b} }}", self.length, self.bits)?;
+        write!(
+            f,
+            "Bits {{ length: {:?}, bits: {:b} }}",
+            self.length, self.bits
+        )?;
         Ok(())
     }
 }
@@ -127,7 +131,10 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
     }
     // Deal with runlength != 0
     if run_length != 0 {
-        *bits += Bits {length: 4, bits: 0xa0000000};
+        *bits += Bits {
+            length: 4,
+            bits: 0xa0000000,
+        };
         let mut last_byte = bits.dump();
         result.append(&mut last_byte);
     }
@@ -141,12 +148,24 @@ mod tests {
 
     #[test]
     fn test_encode_dc() {
-        assert_eq!(encode_dc(2), Bits{ length: 5, bits: 0b01110000000000000000000000000000 });
+        assert_eq!(
+            encode_dc(2),
+            Bits {
+                length: 5,
+                bits: 0b01110000000000000000000000000000
+            }
+        );
     }
 
     #[test]
     fn test_encode_ac() {
-        assert_eq!(encode_ac(0, 16), Bits{ length: 10, bits: 0b11010100000000000000000000000000 });
+        assert_eq!(
+            encode_ac(0, 16),
+            Bits {
+                length: 10,
+                bits: 0b11010100000000000000000000000000
+            }
+        );
     }
 
     #[test]
