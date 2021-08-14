@@ -116,11 +116,19 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
             encode = encode_dc(*num - prev_dc);
         } else {
             // Do not record when encounter 0
+            // Only to increase run_length
             if *num == 0 {
-                if run_length < 15 {
-                    run_length += 1;
-                }
+                run_length += 1;
             } else {
+                // Emit (run_size, 0) when encounter non-zero number
+                // Note the run_size is up to 15
+                // So if there is more than 15 zeros, emit multiple (15, 0) pairs
+                while run_length > 15 {
+                    let encode = encode_ac(15, 0);
+                    *bits += encode;
+                    run_length -= 16;
+                }
+                // After encode zeros, we can now encode this non-zero number
                 encode = encode_ac(run_length, *num);
                 run_length = 0;
             }
@@ -129,12 +137,9 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
         let mut bytes = bits.dump();
         result.append(&mut bytes);
     }
-    // Deal with runlength != 0
+    // End of Block: rl/size = 0/0
     if run_length != 0 {
-        *bits += Bits {
-            length: 4,
-            bits: 0xa0000000,
-        };
+        *bits += encode_ac(0, 0);
         let mut last_byte = bits.dump();
         result.append(&mut last_byte);
     }
