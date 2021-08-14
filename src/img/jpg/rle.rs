@@ -35,7 +35,7 @@ impl Bits {
     pub fn complete(&self) -> (u8, bool) {
         let is_complete = if self.length == 0 { true } else { false };
         let mut last_byte = (self.bits >> 24) as u8;
-        last_byte |= 0b1111111 & (2_u8.pow(8 - self.length as u32) - 1);
+        last_byte |= get_lowest_n_bits(8 - self.length, 0b1111111);
         (last_byte, is_complete)
     }
 }
@@ -69,40 +69,6 @@ impl fmt::Display for Bits {
             self.length, self.bits
         )?;
         Ok(())
-    }
-}
-
-fn to_highest_pos(length: u8, bits: u32) -> u32 {
-    ((bits as u64) << (32 - length) as u64) as u32
-}
-
-fn get_abs_bit_conut(num: i32) -> u32 {
-    let num = num.abs();
-    std::mem::size_of::<i32>() as u32 * 8 - num.leading_zeros()
-}
-
-fn encode_dc(dc: i32) -> Bits {
-    let amplitude = get_abs_bit_conut(dc) as u8;
-    let codeword = LUMINANCE_DC_TABLE.get(&amplitude);
-
-    let ones_complements = if dc < 0 { dc - 1 } else { dc };
-    if let Some(codeword) = codeword {
-        *codeword + Bits::new(amplitude, ones_complements as u32)
-    } else {
-        panic!("No such DC value!");
-    }
-}
-
-fn encode_ac(run_length: u8, ac: i32) -> Bits {
-    let size = get_abs_bit_conut(ac) as u8;
-    let symbol1 = run_length << 4 | size;
-
-    let codeword = LUMINANCE_AC_TABLE.get(&symbol1);
-    let ones_complements = if ac < 0 { ac - 1 } else { ac };
-    if let Some(codeword) = codeword {
-        *codeword + Bits::new(size, ones_complements as u32)
-    } else {
-        panic!("No such AC value!");
     }
 }
 
@@ -145,6 +111,50 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
     }
 
     result
+}
+
+fn encode_dc(dc: i32) -> Bits {
+    // Huffman-coded sysmbol1
+    let amplitude = get_abs_bit_conut(dc) as u8;
+    let codeword = LUMINANCE_DC_TABLE.get(&amplitude);
+    // Row sysmbol2
+    let ones_complements = get_ones_complements(dc);
+    if let Some(codeword) = codeword {
+        *codeword + Bits::new(amplitude, ones_complements as u32)
+    } else {
+        panic!("No such DC value!");
+    }
+}
+
+fn encode_ac(run_length: u8, ac: i32) -> Bits {
+    // Huffman-coded sysmbo1
+    let size = get_abs_bit_conut(ac) as u8;
+    let symbol1 = run_length << 4 | size;
+    let codeword = LUMINANCE_AC_TABLE.get(&symbol1);
+    // Row sysmbo2
+    let ones_complements = get_ones_complements(ac);
+    if let Some(codeword) = codeword {
+        *codeword + Bits::new(size, ones_complements as u32)
+    } else {
+        panic!("No such AC value!");
+    }
+}
+
+fn to_highest_pos(length: u8, bits: u32) -> u32 {
+    ((bits as u64) << (32 - length) as u64) as u32
+}
+
+fn get_lowest_n_bits(length: u8, bits: u8) -> u8 {
+    bits & (2_u8.pow(length as u32) - 1)
+}
+
+fn get_abs_bit_conut(num: i32) -> u32 {
+    let num = num.abs();
+    std::mem::size_of::<i32>() as u32 * 8 - num.leading_zeros()
+}
+
+fn get_ones_complements(num: i32) -> i32 {
+    if num < 0 { num - 1 } else { num }
 }
 
 #[cfg(test)]
