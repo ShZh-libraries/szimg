@@ -456,6 +456,7 @@ fn to_zig_zag(array: [f64; 64]) -> [f64; 64] {
 
 fn rgb_2_ycbcr(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
     // Round to nearest, prevent 0.999 is casted to 0
+    // See JFIF specification for more details about the following formula
     (
         (0.2990 * r as f64 + 0.5870 * g as f64 + 0.1140 * b as f64).round() as u8,
         (-0.1687 * r as f64 - 0.3313 * g as f64 + 0.5000 * b as f64 + 128.).round() as u8,

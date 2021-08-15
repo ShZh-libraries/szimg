@@ -1,8 +1,10 @@
-use super::huffman::{LUMINANCE_AC_TABLE, LUMINANCE_DC_TABLE, CHROMINANCE_AC_TABLE, CHROMINANCE_DC_TABLE};
+use super::huffman::{
+    CHROMINANCE_AC_TABLE, CHROMINANCE_DC_TABLE, LUMINANCE_AC_TABLE, LUMINANCE_DC_TABLE,
+};
 
+use super::jpeg::Mode;
 use std::fmt;
 use std::ops::{Add, AddAssign};
-use super::jpeg::Mode;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Bits {
@@ -116,7 +118,11 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32, mode: Mode) -> Vec
 fn encode_dc(dc: i32, mode: Mode) -> Bits {
     // Huffman-coded sysmbol1
     let amplitude = get_abs_bit_conut(dc) as u8;
-    let codeword = if mode == Mode::Luminance {LUMINANCE_DC_TABLE.get(&amplitude)} else {CHROMINANCE_DC_TABLE.get(&amplitude)};
+    let codeword = if mode == Mode::Luminance {
+        LUMINANCE_DC_TABLE.get(&amplitude)
+    } else {
+        CHROMINANCE_DC_TABLE.get(&amplitude)
+    };
     // Row sysmbol2
     let ones_complements = get_ones_complements(dc);
     if let Some(codeword) = codeword {
@@ -130,7 +136,11 @@ fn encode_ac(run_length: u8, ac: i32, mode: Mode) -> Bits {
     // Huffman-coded sysmbo1
     let size = get_abs_bit_conut(ac) as u8;
     let symbol1 = run_length << 4 | size;
-    let codeword = if mode == Mode::Luminance {LUMINANCE_AC_TABLE.get(&symbol1)} else {CHROMINANCE_AC_TABLE.get(&symbol1)};
+    let codeword = if mode == Mode::Luminance {
+        LUMINANCE_AC_TABLE.get(&symbol1)
+    } else {
+        CHROMINANCE_AC_TABLE.get(&symbol1)
+    };
     // Row sysmbo2
     let ones_complements = get_ones_complements(ac);
     if let Some(codeword) = codeword {
@@ -154,7 +164,11 @@ fn get_abs_bit_conut(num: i32) -> u32 {
 }
 
 fn get_ones_complements(num: i32) -> i32 {
-    if num < 0 { num - 1 } else { num }
+    if num < 0 {
+        num - 1
+    } else {
+        num
+    }
 }
 
 #[cfg(test)]
