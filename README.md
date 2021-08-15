@@ -56,17 +56,16 @@ For example, if you want to save a PNG format file:
 ```rust
 use szimg::png::save_png;
 
-fn get_rgb_data() -> [[[u8; 256]; 256]; 3] {
-  let R = [(0..=255).collect::<Vec<_>>().try_into().unwrap(); 256];
-  let G = (0..=255).map(|x| [x; 256]).collect::<Vec<_>>().try_into().unwrap();
-  let B = [[128; 256]; 256];
-
-  [R, G, B]
-}
-
 fn main() {
-  let data = get_rgb_data();
-  save_png("rgb.png", data).unwrap();
+  let mut png_array = [[[0_u8; 3]; 255]; 255];
+  for outer_index in 0..255 {
+    for inner_index in 0..255 {
+      png_array[outer_index][inner_index][0] = outer_index as u8;
+      png_array[outer_index][inner_index][1] = inner_index as u8;
+      png_array[outer_index][inner_index][2] = 128;
+    }
+  }
+  save_png("rgb.png", png_array).unwrap();
 }
 ```
 
