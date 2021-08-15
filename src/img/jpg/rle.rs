@@ -88,10 +88,7 @@ mod tests {
     fn test_encode_dc() {
         assert_eq!(
             encode_dc(2, Mode::Luminance),
-            Bits {
-                length: 5,
-                bits: 0b01110000000000000000000000000000
-            }
+            Bits::new(5, 0b01110)
         );
     }
 
@@ -99,10 +96,7 @@ mod tests {
     fn test_encode_ac() {
         assert_eq!(
             encode_ac(0, 16, Mode::Luminance),
-            Bits {
-                length: 10,
-                bits: 0b11010100000000000000000000000000
-            }
+            Bits::new(10, 0b1101010000)
         );
     }
 

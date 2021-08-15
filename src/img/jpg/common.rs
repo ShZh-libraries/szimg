@@ -5,8 +5,8 @@ use std::ops::{Add, AddAssign};
 pub struct Bits {
     // Since some bits' length may less than 8
     // So the length field is introduced
-    pub length: u8,
-    pub bits: u32,
+    length: u8,
+    bits: u32,
 }
 
 impl Bits {
