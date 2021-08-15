@@ -9,7 +9,7 @@ type `cargo run --example <example_name>` in your terminal to see these example 
   <tr>
     <td align="center">
       <img
-           src="./asset/readme/mandlebrot.png"
+           src="./asset/mandlebrot.png"
            width="256"
            style="margin-bottom: -4px; border-radius: 8px;"
            alt="mandlebrot"
@@ -17,7 +17,7 @@ type `cargo run --example <example_name>` in your terminal to see these example 
     </td>
     <td align="center">
       <img
-           src="./asset/readme/julia_set.png"
+           src="./asset/julia_set.png"
            width="256"
            style="margin-bottom: -4px; border-radius: 8px;"
            alt="julia_set"
@@ -25,7 +25,7 @@ type `cargo run --example <example_name>` in your terminal to see these example 
     </td>
     <td align="center">
       <img
-           src="./asset/readme/barnsley_fern.png"
+           src="./asset/barnsley_fern.png"
            width="256"
            style="margin-bottom: -4px; border-radius: 8px;"
            alt="barnsley_fern"
@@ -44,6 +44,11 @@ type `cargo run --example <example_name>` in your terminal to see these example 
     </td>
   </tr>
 </table>
+
+
+
+
+
 
 
 
