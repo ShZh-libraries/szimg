@@ -27,8 +27,8 @@ fn multiply_add(g: &[i32; 64], u: usize, v: usize) -> f64 {
 
     for x in 0..8 {
         for y in 0..8 {
-            let cos1 = f64::cos((2 * x + 1) as f64 * u as f64 * std::f64::consts::PI / 16.);
-            let cos2 = f64::cos((2 * y + 1) as f64 * v as f64 * std::f64::consts::PI / 16.);
+            let cos1 = f64::cos((2 * x + 1) as f64 * v as f64 * std::f64::consts::PI / 16.);
+            let cos2 = f64::cos((2 * y + 1) as f64 * u as f64 * std::f64::consts::PI / 16.);
             result += g[x * 8 + y] as f64 * cos1 * cos2;
         }
     }
