@@ -1,6 +1,6 @@
 mod helper;
 
-use tiny_img::png::save_png;
+use szimg::png::save_png;
 use helper::diff_file;
 
 #[test]

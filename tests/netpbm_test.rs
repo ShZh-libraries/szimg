@@ -1,6 +1,6 @@
 mod helper;
 
-use tiny_img::netpbm::{ save_pbm, save_pgm, save_ppm, Mode };
+use szimg::netpbm::{ save_pbm, save_pgm, save_ppm, Mode };
 use helper::diff_file;
 
 #[test]

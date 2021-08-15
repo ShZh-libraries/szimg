@@ -1,10 +1,10 @@
 [package]
-name = "tiny-img"
+name = "szimg"
 version = "0.1.0"
 edition = "2018"
 
 [lib]
-name = "tiny_img"
+name = "szimg"
 path = "src/lib.rs"
 
 [[tests]]

@@ -1,6 +1,6 @@
 mod helper;
 
-use tiny_img::jpg::{ save_jpg_gray, save_jpg_rgb };
+use szimg::jpg::{ save_jpg_gray, save_jpg_rgb };
 use helper::diff_file;
 
 #[test]

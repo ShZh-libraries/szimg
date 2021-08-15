@@ -1,7 +1,7 @@
 mod complex;
 
 use complex::Complex;
-use tiny_img::netpbm::{save_ppm, Mode};
+use szimg::netpbm::{save_ppm, Mode};
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 1000;

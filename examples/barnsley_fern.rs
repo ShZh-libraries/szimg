@@ -1,5 +1,5 @@
 use rand::Rng;
-use tiny_img::netpbm::{save_ppm, Mode};
+use szimg::netpbm::{save_ppm, Mode};
 
 const WIDTH: usize = 600;
 const HEIGHT: usize = 600;
