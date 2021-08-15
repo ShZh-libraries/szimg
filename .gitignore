@@ -21,3 +21,7 @@ image/
 
 tests/output/*
 !tests/output/.gitkeep
+
+# For private use
+asset/wiki/*
+doc/*
