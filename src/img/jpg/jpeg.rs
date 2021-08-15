@@ -5,7 +5,7 @@ use super::dct::get_dct;
 use super::huffman::{
     CHROMINANCE_AC_SPEC, CHROMINANCE_DC_SPEC, LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC,
 };
-use super::quant::{quant, QUANT_TABLE};
+use super::quant::{quant, LUMINANCE_QUANT_TABLE, CHROMINANCE_QUANT_TABLE};
 use super::rle::encode;
 
 // Pre-defxined zig-zag order index for array
@@ -153,10 +153,10 @@ impl Serializable for DQT {
 
         // Index 0
         bytes.push(0_u8);
-        bytes.extend(QUANT_TABLE[0].iter().flatten());
+        bytes.extend(LUMINANCE_QUANT_TABLE.iter().flatten());
         // Index 1
         bytes.push(1_u8);
-        bytes.extend(QUANT_TABLE[1].iter().flatten());
+        bytes.extend(CHROMINANCE_QUANT_TABLE.iter().flatten());
 
         bytes
     }
