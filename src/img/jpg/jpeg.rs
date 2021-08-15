@@ -474,21 +474,3 @@ fn rgb_2_ycbcr(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
         (0.5000 * r as f64 - 0.4187 * g as f64 - 0.0813 * b as f64 + 128.).round() as u8,
     )
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_block_ycbr() {
-        let test = SOS {
-            width: 16,
-            height: 16,
-            component: 3,
-            data: vec![1; 16 * 16 * 4],
-        };
-
-        let result = test.convert_rgb_blocks_to_ycbcr_blocks(0, 0);
-        println!("{:?}", result);
-    }
-}
