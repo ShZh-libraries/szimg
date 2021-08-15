@@ -244,14 +244,14 @@ impl Payload for DHT {
 impl SOS {
     // Porcess every block and add byte to the reference
     // Return remained bits
-    fn process_gray_scale_blocks(&self, bytes: &mut Vec<u8>) -> Bits {
+    fn process_gray_blocks(&self, bytes: &mut Vec<u8>) -> Bits {
         let mut prev_dc = 0;
         let mut bits = Bits::new(0, 0);
         // Process every 8x8 block
         for start_y in (0..self.height).step_by(8) {
             for start_x in (0..self.width).step_by(8) {
-                let block = self.get_block(start_x as usize, start_y as usize);
-                dump_bytes(block, bytes, &mut bits, &mut prev_dc, Mode::Luminance);
+                let block = self.get_gray_block(start_x as usize, start_y as usize);
+                prev_dc = dump_bytes(block, prev_dc, Mode::Luminance, bytes, &mut bits);
             }
         }
 
@@ -259,42 +259,45 @@ impl SOS {
     }
 
     fn process_rgba_blocks(&self, bytes: &mut Vec<u8>) -> Bits {
-        let (mut prev_Y_dc, mut prev_cb_dc, mut prev_cr_dc) = (0, 0, 0);
+        let (mut prev_y_dc, mut prev_cb_dc, mut prev_cr_dc) = (0, 0, 0);
         let mut bits = Bits::new(0, 0);
 
+        // Process order:
         // Y blocks: 16 x 16 (which will be then divided into 4 8x8 blocks)
-        // Cb blocks: 8 x 8
-        // Cr blocks: 8 x 8
+        // Cb blocks: 8 x 8 (Subsampled from the 16 x 16 block)
+        // Cr blocks: 8 x 8 (Subsampled from the 16 x 16 block)
         for start_y in (0..self.height).step_by(16) {
             for start_x in (0..self.width).step_by(16) {
-                // Convert RGB to YCbCr
+                // Get four 4x4 blocks array from origin 16x16 block
                 let (y_blocks, cb_blocks, cr_blocks) =
-                    self.convert_rgb_block_to_ycbcr(start_x.into(), start_y.into());
-                // divide 16x16 blocks into 4 4x4 blocks
+                    self.convert_rgb_blocks_to_ycbcr_blocks(start_x.into(), start_y.into());
+                // Divide 16x16 blocks into 4 4x4 blocks
                 for index in 0..4 {
-                    dump_bytes(
+                    prev_y_dc = dump_bytes(
                         y_blocks[index],
+                        prev_y_dc,
+                        Mode::Luminance,
+                        // The following 2 params are only to store the state
+                        // If you just want to read the code, just ignore them
                         bytes,
                         &mut bits,
-                        &mut prev_Y_dc,
-                        Mode::Luminance,
                     );
                 }
                 let subsampled_cb_block = subsampling(cb_blocks);
-                dump_bytes(
+                prev_cb_dc = dump_bytes(
                     subsampled_cb_block,
+                    prev_cb_dc,
+                    Mode::Chromiance,
                     bytes,
                     &mut bits,
-                    &mut prev_cb_dc,
-                    Mode::Chromiance,
                 );
                 let subsampled_cr_block = subsampling(cr_blocks);
-                dump_bytes(
+                prev_cr_dc = dump_bytes(
                     subsampled_cr_block,
+                    prev_cr_dc,
+                    Mode::Chromiance,
                     bytes,
                     &mut bits,
-                    &mut prev_cr_dc,
-                    Mode::Chromiance,
                 );
             }
         }
@@ -302,63 +305,25 @@ impl SOS {
         bits
     }
 
-    fn get_block(&self, start_x: usize, start_y: usize) -> [i32; 64] {
-        let mut block = [0; 64];
-        // Pad the edge
-        for y in 0..8 {
-            for x in 0..8 {
-                let offset_y = std::cmp::min(start_y + y, self.height as usize - 1);
-                let offset_x = std::cmp::min(start_x + x, self.width as usize - 1);
-                block[y * 8 + x] = self.data[offset_y * self.width as usize + offset_x] as i32;
-            }
-        }
-        block
-    }
-
-    fn get_block_ycbcr(&self, start_x: usize, start_y: usize) -> ([i32; 64], [i32; 64], [i32; 64]) {
-        let mut y_block = [0; 64];
-        let mut cb_block = [0; 64];
-        let mut cr_block = [0; 64];
-
-        for y in 0..8 {
-            for x in 0..8 {
-                let offset_y = std::cmp::min(start_y + y, self.height as usize - 1);
-                let offset_x = std::cmp::min(start_x + x, self.width as usize - 1);
-                let offset = (offset_y * self.width as usize + offset_x) * 4; // RGBA 4 channels
-
-                let (r, g, b) = (
-                    self.data[offset],
-                    self.data[offset + 1],
-                    self.data[offset + 2],
-                );
-                let (Y, cb, cr) = rgb_2_ycbcr(r, g, b);
-                y_block[y * 8 + x] = Y as i32;
-                cb_block[y * 8 + x] = cb as i32;
-                cr_block[y * 8 + x] = cr as i32;
-            }
-        }
-
-        (y_block, cb_block, cr_block)
-    }
-
-    fn convert_rgb_block_to_ycbcr(
+     // Get four 4x4 blocks array from origin 16x16 block
+    fn convert_rgb_blocks_to_ycbcr_blocks(
         &self,
         start_x: usize,
         start_y: usize,
     ) -> ([[i32; 64]; 4], [[i32; 64]; 4], [[i32; 64]; 4]) {
-        let mut y_blocks = [[0; 64]; 4];
-        let mut cb_blocks = [[0; 64]; 4];
-        let mut cr_blocks = [[0; 64]; 4];
+        let (mut y_blocks, mut cb_blocks, mut cr_blocks) = ([[0; 64]; 4], [[0; 64]; 4], [[0; 64]; 4]);
 
         for y in (0..16).step_by(8) {
             for x in (0..16).step_by(8) {
+                // Calculate the position of one of the blocks
                 let block_start_y = std::cmp::min(start_y + y, self.height as usize - 1);
                 let block_start_x = std::cmp::min(start_x + x, self.width as usize - 1);
 
-                // The origin data
+                // Insert position of the final 4 elements array
                 let index = (2 * y + x) / 8;
+                // Get 8x8 component by given start x and start y
                 let (y_block, cb_block, cr_block) =
-                    self.get_block_ycbcr(block_start_x, block_start_y);
+                    self.get_ycbcr_block(block_start_x, block_start_y);
                 y_blocks[index] = y_block;
                 cb_blocks[index] = cb_block;
                 cr_blocks[index] = cr_block;
@@ -367,23 +332,63 @@ impl SOS {
 
         (y_blocks, cb_blocks, cr_blocks)
     }
+
+    fn get_gray_block(&self, start_x: usize, start_y: usize) -> [i32; 64] {
+        let mut block = [0; 64];
+        // Pad the edge
+        for row_index in 0..8 {
+            for column_index in 0..8 {
+                // Map to self.data by using offset pair
+                let offset_y = std::cmp::min(start_y + row_index, self.height as usize - 1);
+                let offset_x = std::cmp::min(start_x + column_index, self.width as usize - 1);
+                block[row_index * 8 + column_index] = self.data[offset_y * self.width as usize + offset_x] as i32;
+            }
+        }
+        block
+    }
+
+    fn get_ycbcr_block(&self, start_x: usize, start_y: usize) -> ([i32; 64], [i32; 64], [i32; 64]) {
+        let (mut y_block, mut cb_block, mut cr_block) = ([0; 64], [0; 64], [0; 64]);
+
+        for row_index in 0..8 {
+            for column_index in 0..8 {
+                let offset_y = std::cmp::min(start_y + row_index, self.height as usize - 1);
+                let offset_x = std::cmp::min(start_x + column_index, self.width as usize - 1);
+                let offset = (offset_y * self.width as usize + offset_x) * 4; // RGBA 4 channels
+
+                let (r, g, b) = (
+                    self.data[offset],
+                    self.data[offset + 1],
+                    self.data[offset + 2],
+                );
+                let (y, cb, cr) = rgb_2_ycbcr(r, g, b);
+                y_block[row_index * 8 + column_index] = y as i32;
+                cb_block[row_index * 8 + column_index] = cb as i32;
+                cr_block[row_index * 8 + column_index] = cr as i32;
+            }
+        }
+
+        (y_block, cb_block, cr_block)
+    }
 }
 
 fn dump_bytes(
     block: [i32; 64],
+    prev_dc: i32,
+    mode: Mode,
+    // These two params are to store the state
     bytes: &mut Vec<u8>,
     bits: &mut Bits,
-    prev_dc: &mut i32,
-    mode: Mode,
-) {
+) -> i32 {
     // DCT -> ZigZag -> Quantization -> Huffman
     let dct = get_dct(block);
     let zig_zag = to_zig_zag(dct);
     let (sequence, dc) = quant(zig_zag, mode);
-    let mut encoded = encode(&sequence, bits, *prev_dc, mode);
+    let mut encoded = encode(&sequence, bits, prev_dc, mode);
     bytes.append(&mut encoded);
 
-    *prev_dc = dc;
+    // Return as previous DC value
+    dc
 }
 
 fn subsampling(data: [[i32; 64]; 4]) -> [i32; 64] {
@@ -408,11 +413,11 @@ fn subsampling(data: [[i32; 64]; 4]) -> [i32; 64] {
 impl Serializable for SOS {
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        let mut bits: Bits;
+        let bits: Bits;
         // Different header for different color space
         if self.component == 1 {
             bytes.extend([0x01, 0x01, 0x00, 0x00, 0x3f, 0x00]);
-            bits = self.process_gray_scale_blocks(&mut bytes);
+            bits = self.process_gray_blocks(&mut bytes);
         } else {
             bytes.extend([0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00]);
             bits = self.process_rgba_blocks(&mut bytes);
@@ -430,6 +435,7 @@ impl Serializable for SOS {
 
 impl Payload for SOS {
     fn get_length(&self) -> u16 {
+        // The meaningless header's length
         if self.component == 1 {
             6
         } else {
@@ -449,7 +455,7 @@ fn to_zig_zag(array: [f64; 64]) -> [f64; 64] {
 }
 
 fn rgb_2_ycbcr(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
-    // Round to nearest, prevent 0.999 to 0
+    // Round to nearest, prevent 0.999 is casted to 0
     (
         (0.2990 * r as f64 + 0.5870 * g as f64 + 0.1140 * b as f64).round() as u8,
         (-0.1687 * r as f64 - 0.3313 * g as f64 + 0.5000 * b as f64 + 128.).round() as u8,
@@ -470,7 +476,7 @@ mod tests {
             data: vec![1; 16 * 16 * 4],
         };
 
-        let result = test.convert_rgb_block_to_ycbcr(0, 0);
+        let result = test.convert_rgb_blocks_to_ycbcr_blocks(0, 0);
         println!("{:?}", result);
     }
 }
