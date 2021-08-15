@@ -2,9 +2,11 @@ use lazy_static::lazy_static;
 
 use super::jpeg::Mode;
 
+type QuantTable = [[u8; 8]; 8];
+
 lazy_static! {
-    pub static ref QUANT_TABLE: [[[u8; 8]; 8]; 2] = {
-        let mut q: [[[u8; 8]; 8]; 2] = [
+    pub static ref QUANT_TABLE: [QuantTable; 2] = {
+        let mut q: [QuantTable; 2] = [
             // Luminance
             [
                 [16, 11, 12, 14, 12, 10, 16, 14],
@@ -53,20 +55,4 @@ pub fn quant(g: [f64; 64], mode: Mode) -> ([i32; 64], i32) {
 
     // Return DC value
     (result, result[0])
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_quant_table() {
-        for i in 0..2 {
-            for j in 0..8 {
-                for k in 0..8 {
-                    println!("{}", QUANT_TABLE[i][j][k]);
-                }
-            }
-        }
-    }
 }
