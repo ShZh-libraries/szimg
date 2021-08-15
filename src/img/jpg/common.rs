@@ -64,7 +64,8 @@ impl fmt::Display for Bits {
         write!(
             f,
             "Bits {{ length: {:?}, bits: {:b} }}",
-            self.length, self.bits
+            self.length,
+            bit::get_heighest_n_bits(self.length, self.bits)
         )?;
         Ok(())
     }
@@ -78,6 +79,10 @@ pub mod bit {
 
     pub fn get_lowest_n_bits(length: u8, bits: u8) -> u8 {
         bits & (2_u16.pow(length as u32) - 1) as u8
+    }
+
+    pub fn get_heighest_n_bits(length: u8, bits: u32) -> u8 {
+        (bits >> (32 - length) as u32) as u8
     }
 
     pub fn get_bit_conut(num: i32) -> u32 {
