@@ -9,7 +9,7 @@ use jpeg::JPEG;
 
 use std::error::Error;
 
-pub fn save_jpg<const WIDTH: usize, const HEIGHT: usize>(
+pub fn save_jpg_gray<const WIDTH: usize, const HEIGHT: usize>(
     path: &str,
     data: [[u8; WIDTH]; HEIGHT],
 ) -> Result<(), Box<dyn Error>> {
@@ -23,6 +23,14 @@ pub fn save_jpg_rgb<const WIDTH: usize, const HEIGHT: usize>(
 ) -> Result<(), Box<dyn Error>> {
     // Convert RGB to RGBA
     let data = to_rgba(data).iter().cloned().flatten().flatten().collect::<Vec<_>>();
+    JPEG::new(WIDTH as u16, HEIGHT as u16, 3, &data).dump(path)
+}
+
+pub fn save_jpg_rgba<const WIDTH: usize, const HEIGHT: usize>(
+    path: &str,
+    data: [[[u8; 4]; WIDTH]; HEIGHT],
+) -> Result<(), Box<dyn Error>> {
+    let data = data.iter().cloned().flatten().flatten().collect::<Vec<_>>();
     JPEG::new(WIDTH as u16, HEIGHT as u16, 3, &data).dump(path)
 }
 
@@ -59,7 +67,7 @@ mod test {
             [87, 79, 69, 68, 65, 76, 78, 94],
         ];
 
-        save_jpg("./image/jpeg.jpg", data).unwrap();
+        save_jpg_gray("./image/jpeg.jpg", data).unwrap();
     }
 
     #[test]
