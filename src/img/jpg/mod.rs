@@ -27,6 +27,8 @@ pub fn save_jpg_rgb<const WIDTH: usize, const HEIGHT: usize>(
     JPEG::new(WIDTH as u16, HEIGHT as u16, 3, &data).dump(path)
 }
 
+// JPEG does not support alpha channel
+// The value of this channel will be automaticlly ignored
 pub fn save_jpg_rgba<const WIDTH: usize, const HEIGHT: usize>(
     path: &str,
     data: [[[u8; 4]; WIDTH]; HEIGHT],
