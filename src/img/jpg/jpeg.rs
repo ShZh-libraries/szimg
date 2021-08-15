@@ -394,15 +394,25 @@ fn dump_bytes(
 
 fn subsampling(data: [[i32; 64]; 4]) -> [i32; 64] {
     let mut result = [0; 64];
+    const indexes_in_block: [usize; 64] = [
+        0, 2, 4, 6, 0, 2, 4, 6,
+        16, 18, 20, 22, 16, 18, 20, 22,
+        32, 34, 36, 38, 32, 34, 36, 38,
+        48, 50, 52, 54, 48, 50, 52, 54,
+        0, 2, 4, 6, 0, 2, 4, 6,
+        16, 18, 20, 22, 16, 18, 20, 22,
+        32, 34, 36, 38, 32, 34, 36, 38,
+        48, 50, 52, 54, 48, 50, 52, 54,
+    ];
 
     for y in 0..8 {
         for x in 0..8 {
-            let offset_y = 2 * (y / 4) + x / 4;
-            let offset_x = 2 * x % 8;
-            result[y * 8 + x] = (data[offset_y][offset_x]
-                + data[offset_y][offset_x + 1]
-                + data[offset_y][offset_x + 8]
-                + data[offset_y][offset_x + 9]
+            let block_index = 2 * (y / 4) + x / 4;
+            let index_block = indexes_in_block[y * 8 + x];
+            result[y * 8 + x] = (data[block_index][index_block]
+                + data[block_index][index_block + 1]
+                + data[block_index][index_block + 8]
+                + data[block_index][index_block + 9]
                 + 2)
                 / 4;
         }
