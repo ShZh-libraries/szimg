@@ -22,7 +22,7 @@ pub struct CRCIterator {
 
 impl ChecksumIterator for CRCIterator {
     fn new() -> Self {
-        CRCIterator { crc: !0 }
+        Self { crc: !0 }
     }
 
     fn iter(&mut self, bytes: &Vec<u8>) {

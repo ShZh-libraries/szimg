@@ -1,6 +1,6 @@
 use super::{Image, Serializable};
 
-use crate::checksum::{adler::AdlerIterator, crc, ChecksumIterator};
+use super::{adler::AdlerIterator, crc, ChecksumIterator};
 
 pub struct PNG {
     magic_number: [u8; 8],

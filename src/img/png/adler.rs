@@ -19,7 +19,7 @@ pub struct AdlerIterator {
 
 impl ChecksumIterator for AdlerIterator {
     fn new() -> Self {
-        AdlerIterator { a: 1, b: 0 }
+        Self { a: 1, b: 0 }
     }
 
     fn iter(&mut self, bytes: &Vec<u8>) {
