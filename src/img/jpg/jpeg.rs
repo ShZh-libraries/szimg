@@ -1,9 +1,10 @@
 use super::{Image, Serializable};
 
 use super::dct::get_dct;
-use super::huffman::{LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC};
-use super::quant::quant;
-use super::quant::QUANT_TABLE;
+use super::huffman::{
+    CHROMINANCE_AC_SPEC, CHROMINANCE_DC_SPEC, LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC,
+};
+use super::quant::{QUANT_TABLE, quant, Mode};
 use super::rle::{encode, Bits};
 
 // Pre-defxined zig-zag order index for array
@@ -29,7 +30,8 @@ pub struct JPEG {
 
 struct Segment<T: Payload> {
     marker: [u8; 2],
-    // length: Option<u16>,     // This field can be deduced by payload
+    // The following field can be deduced by payload
+    // length: Option<u16>,
     payload: Option<T>,
 }
 
@@ -44,13 +46,13 @@ struct SOF0 {
     depth: u8,
     width: u16,
     height: u16,
-    channel: u8,
+    component: u8,
 }
 
 // Huffman tables
 // TODO: RGB
 struct DHT {
-    channel: u8,
+    component: u8,
     // The following field is imported from `huffman` module
     // huffman_tables: [HuffmanSpec]
 }
@@ -60,11 +62,12 @@ struct DHT {
 struct SOS {
     width: u16,
     height: u16,
+    component: u8,
     data: Vec<u8>,
 }
 
 impl JPEG {
-    pub fn new(width: u16, height: u16, data: &Vec<u8>) -> Self {
+    pub fn new(width: u16, height: u16, component: u8, data: &Vec<u8>) -> Self {
         Self {
             quant_tables: Segment {
                 marker: [0xff, 0xdb],
@@ -76,18 +79,19 @@ impl JPEG {
                     depth: 8,
                     width,
                     height,
-                    channel: 1,
+                    component,
                 }),
             },
             huffman_tables: Segment {
                 marker: [0xff, 0xc4],
-                payload: Some(DHT { channel: 1 }),
+                payload: Some(DHT { component }),
             },
             image_data: Segment {
                 marker: [0xff, 0xda],
                 payload: Some(SOS {
                     width,
                     height,
+                    component,
                     data: data.to_vec(),
                 }),
             },
@@ -131,7 +135,7 @@ where
             // Marker length
             let length = payload.get_length() + 2; // include length's own space(2 byte) as well
             bytes.extend(length.to_be_bytes()); // High byte first
-            bytes.extend(payload.get_bytes());  // Effective data
+            bytes.extend(payload.get_bytes()); // Effective data
         }
 
         bytes
@@ -169,10 +173,15 @@ impl Serializable for SOF0 {
         bytes.push(self.depth);
         bytes.extend(self.height.to_be_bytes());
         bytes.extend(self.width.to_be_bytes());
-        bytes.push(self.channel);
+        bytes.push(self.component);
 
-        // No subsampling for grayscale image
-        bytes.extend([0x1, 0x11, 0x00]);
+        if self.component == 1 {
+            // No subsampling for grayscale image
+            bytes.extend([0x1, 0x11, 0x00]);
+        } else {
+            // 4:2:0 subsampling for other image
+            bytes.extend([0x01, 0x22, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01]);
+        }
 
         bytes
     }
@@ -180,7 +189,8 @@ impl Serializable for SOF0 {
 
 impl Payload for SOF0 {
     fn get_length(&self) -> u16 {
-        6 + 3
+        // See Serializable traits for SOF0 for more details
+        6 + 3 * self.component as u16
     }
 }
 
@@ -196,6 +206,18 @@ impl Serializable for DHT {
         bytes.extend(LUMINANCE_AC_SPEC.count);
         bytes.extend(&LUMINANCE_AC_SPEC.value);
 
+        // None-gray scale image
+        // Put Chrominace table
+        if self.component != 1 {
+            bytes.push(0x01);
+            bytes.extend(CHROMINANCE_DC_SPEC.count);
+            bytes.extend(&CHROMINANCE_DC_SPEC.value);
+
+            bytes.push(0x11);
+            bytes.extend(CHROMINANCE_AC_SPEC.count);
+            bytes.extend(&CHROMINANCE_AC_SPEC.value);
+        }
+
         bytes
     }
 }
@@ -204,32 +226,171 @@ impl Payload for DHT {
     fn get_length(&self) -> u16 {
         // 1: header
         // 16: count array length
-        (1 + 16 + LUMINANCE_DC_SPEC.value.len() as u16)
-            + (1 + 16 + LUMINANCE_AC_SPEC.value.len() as u16)
+        let luminance_length = (1 + 16 + LUMINANCE_DC_SPEC.value.len() as u16)
+            + (1 + 16 + LUMINANCE_AC_SPEC.value.len() as u16);
+        if self.component == 1 {
+            return luminance_length;
+        }
+        let chromiance_length = (1 + 16 + CHROMINANCE_DC_SPEC.value.len() as u16)
+            + (1 + 16 + CHROMINANCE_AC_SPEC.value.len() as u16);
+        luminance_length + chromiance_length
     }
+}
+
+impl SOS {
+    // Porcess every block and add byte to the reference
+    // Return remained bits
+    fn process_gray_scale_blocks(&self, bytes: &mut Vec<u8>) -> Bits {
+        let mut prev_dc = 0;
+        let mut bits = Bits::new(0, 0);
+        // Process every 8x8 block
+        for start_y in (0..self.height).step_by(8) {
+            for start_x in (0..self.width).step_by(8) {
+                let block = self.get_block(start_x as usize, start_y as usize);
+                dump_bytes(block, bytes, &mut bits, &mut prev_dc, Mode::Luminance);
+            }
+        }
+
+        bits
+    }
+
+    fn process_rgba_blocks(&self, bytes: &mut Vec<u8>) -> Bits {
+        let (mut prev_Y_dc, mut prev_cb_dc, mut prev_cr_dc) = (0, 0, 0);
+        let mut bits = Bits::new(0, 0);
+
+        // Y blocks: 16 x 16 (which will be then divided into 4 4x4 blocks)
+        // Cb blocks: 8 x 8
+        // Cr blocks: 8 x 8
+        for start_y in (0..self.height).step_by(16) {
+            for start_x in (0..self.width).step_by(16) {
+                // Convert RGB to YCbCr
+                let (y_blocks, cb_blocks, cr_blocks) =
+                    self.convert_rgb_block_to_ycbcr(start_x.into(), start_y.into());
+                // divide 16x16 blocks into 4 4x4 blocks
+                for index in 0..4 {
+                    dump_bytes(y_blocks[index], bytes, &mut bits, &mut prev_Y_dc, Mode::Luminance);
+                }
+                let subsampled_cb_block = subsampling(cb_blocks);
+                dump_bytes(subsampled_cb_block, bytes, &mut bits, &mut prev_cb_dc, Mode::Chromiance);
+                let subsampled_cr_block = subsampling(cr_blocks);
+                dump_bytes(subsampled_cr_block, bytes, &mut bits, &mut prev_cr_dc, Mode::Chromiance);
+            }
+        }
+
+        bits
+    }
+
+    fn get_block(&self, start_x: usize, start_y: usize) -> [i32; 64] {
+        let mut block = [0; 64];
+        // Pad the edge
+        for y in 0..8 {
+            for x in 0..8 {
+                let offset_y = std::cmp::min(start_y + y, self.height as usize - 1);
+                let offset_x = std::cmp::min(start_x + x, self.width as usize - 1);
+                block[y * 8 + x] = self.data[offset_y * self.width as usize + offset_x] as i32;
+            }
+        }
+        block
+    }
+
+    fn get_block_ycbcr(&self, start_x: usize, start_y: usize) -> ([i32; 64], [i32; 64], [i32; 64]) {
+        let mut y_block = [0; 64];
+        let mut cb_block = [0; 64];
+        let mut cr_block = [0; 64];
+
+        for y in 0..8 {
+            for x in 0..8 {
+                let offset_y = std::cmp::min(start_y + y, self.height as usize - 1);
+                let offset_x = std::cmp::min(start_x + x, self.width as usize - 1);
+                let offset = (offset_y * self.width as usize + offset_x) * 4; // RGBA 4 channels
+
+                let (r, g, b) = (
+                    self.data[offset],
+                    self.data[offset + 1],
+                    self.data[offset + 2],
+                );
+                let (Y, cb, cr) = rgb_2_ycbcr(r, g, b);
+                y_block[y * 8 + x] = Y as i32;
+                cb_block[y * 8 + x] = cb as i32;
+                cr_block[y * 8 + x] = cr as i32;
+            }
+        }
+
+        (y_block, cb_block, cr_block)
+    }
+
+    fn convert_rgb_block_to_ycbcr(
+        &self,
+        start_x: usize,
+        start_y: usize,
+    ) -> ([[i32; 64]; 4], [[i32; 64]; 4], [[i32; 64]; 4]) {
+        let mut y_blocks = [[0; 64]; 4];
+        let mut cb_blocks = [[0; 64]; 4];
+        let mut cr_blocks = [[0; 64]; 4];
+
+        for y in (0..16).step_by(8) {
+            for x in (0..16).step_by(8) {
+                let block_start_y = std::cmp::min(start_y + y, self.height as usize - 1);
+                let block_start_x = std::cmp::min(start_x + x, self.width as usize - 1);
+
+                let index = (2 * y + x) / 8;
+                let (y_block, cb_block, cr_block) =
+                    self.get_block_ycbcr(block_start_x, block_start_y);
+                y_blocks[index] = y_block;
+                cb_blocks[index] = cb_block;
+                cr_blocks[index] = cr_block;
+            }
+        }
+
+        (y_blocks, cb_blocks, cr_blocks)
+    }
+}
+
+fn dump_bytes(block: [i32; 64], bytes: &mut Vec<u8>, bits: &mut Bits, prev_dc: &mut i32, mode: Mode) {
+    // DCT -> ZigZag -> Quantization -> Huffman
+    let dct = get_dct(block);
+    let zig_zag = to_zig_zag(dct);
+    let (sequence, dc) = quant(zig_zag, mode);
+    let mut encoded = encode(&sequence, bits, *prev_dc, mode);
+    bytes.append(&mut encoded);
+
+    *prev_dc = dc;
+}
+
+fn subsampling(data: [[i32; 64]; 4]) -> [i32; 64] {
+    let mut result = [0; 64];
+
+    for y in 0..8 {
+        for x in 0..8 {
+            let offset_y = 2 * (y / 4) + x / 4;
+            let offset_x = 2 * x % 8;
+            result[y * 8 + x] = (data[offset_y][offset_x]
+                + data[offset_y][offset_x + 1]
+                + data[offset_y][offset_x + 8]
+                + data[offset_y][offset_x + 9]
+                + 2)
+                / 4;
+        }
+    }
+
+    result
 }
 
 impl Serializable for SOS {
     fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        bytes.extend([0x01, 0x01, 0x00, 0x00, 0x3f, 0x00]);
-
-        let mut prev_dc = 0;
-        let mut bits = Bits::new(0, 0);
-        // Process every block
-        for start_y in (0..self.height).step_by(8) {
-            for start_x in (0..self.width).step_by(8) {
-                let block = get_block(&self, start_x as usize, start_y as usize);
-                // DCT -> ZigZag -> Quantization -> Huffman
-                let dct = get_dct(block);
-                let zig_zag = to_zig_zag(dct);
-                let (sequence, dc) = quant(zig_zag);
-                let mut encoded = encode(&sequence, &mut bits, prev_dc);
-                bytes.append(&mut encoded);
-
-                prev_dc = dc;
-            }
+        let mut bits: Bits;
+        // Different header for different color space
+        if self.component == 1 {
+            bytes.extend([0x01, 0x01, 0x00, 0x00, 0x3f, 0x00]);
+            bits = self.process_gray_scale_blocks(&mut bytes);
+        } else {
+            bytes.extend([
+                0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00,
+            ]);
+            bits = self.process_rgba_blocks(&mut bytes);
         }
+
         // Deal with last byte
         let (last_byte, is_complete) = bits.complete();
         if !is_complete {
@@ -242,23 +403,12 @@ impl Serializable for SOS {
 
 impl Payload for SOS {
     fn get_length(&self) -> u16 {
-        6
-    }
-}
-
-fn get_block(image: &SOS, start_x: usize, start_y: usize) -> [i32; 64] {
-    let mut block = [0; 64];
-
-    // Pad the edge
-    for y in 0..8 {
-        for x in 0..8 {
-            let offset_y = std::cmp::min(start_y + y, image.height as usize);
-            let offset_x = std::cmp::min(start_x + x, image.width as usize);
-            block[y * 8 + x] = image.data[offset_y * image.width as usize + offset_x] as i32;
+        if self.component == 1 {
+            6
+        } else {
+            10
         }
     }
-
-    block
 }
 
 fn to_zig_zag(array: [f64; 64]) -> [f64; 64] {
@@ -269,4 +419,31 @@ fn to_zig_zag(array: [f64; 64]) -> [f64; 64] {
     }
 
     result
+}
+
+fn rgb_2_ycbcr(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
+    // Round to nearest, prevent 0.999 to 0
+    (
+        (0.2990 * r as f64 + 0.5870 * g as f64 + 0.1140 * b as f64).round() as u8,
+        (-0.1687 * r as f64 - 0.3313 * g as f64 + 0.5000 * b as f64 + 128.).round() as u8,
+        (0.5000 * r as f64 - 0.4187 * g as f64 - 0.0813 * b as f64 + 128.).round() as u8,
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_block_ycbr() {
+        let test = SOS {
+            width: 16,
+            height: 16,
+            component: 3,
+            data: vec![1; 16 * 16 * 4],
+        };
+
+        let result = test.convert_rgb_block_to_ycbcr(0, 0);
+        println!("{:?}", result);
+    }
 }

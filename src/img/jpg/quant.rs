@@ -1,5 +1,11 @@
 use lazy_static::lazy_static;
 
+#[derive(PartialEq, Clone, Copy)]
+pub enum Mode {
+    Luminance,
+    Chromiance,
+}
+
 lazy_static! {
     pub static ref QUANT_TABLE: [[[u8; 8]; 8]; 2] = {
         let mut q: [[[u8; 8]; 8]; 2] = [
@@ -39,12 +45,13 @@ lazy_static! {
     };
 }
 
-pub fn quant(g: [f64; 64]) -> ([i32; 64], i32) {
+pub fn quant(g: [f64; 64], mode: Mode) -> ([i32; 64], i32) {
     let mut result = [0_i32; 64];
+    let index = if mode == Mode::Luminance { 0 } else { 1 };
     for j in 0..8 {
         for k in 0..8 {
             result[j * 8 + k] =
-                (g[j * 8 + k] as f64 / (QUANT_TABLE[0][j][k] as i32) as f64).round() as i32;
+                (g[j * 8 + k] as f64 / (QUANT_TABLE[index][j][k] as i32) as f64).round() as i32;
         }
     }
 

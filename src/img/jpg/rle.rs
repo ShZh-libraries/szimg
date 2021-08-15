@@ -1,7 +1,8 @@
-use super::huffman::{LUMINANCE_AC_TABLE, LUMINANCE_DC_TABLE};
+use super::huffman::{LUMINANCE_AC_TABLE, LUMINANCE_DC_TABLE, CHROMINANCE_AC_TABLE, CHROMINANCE_DC_TABLE};
 
 use std::fmt;
 use std::ops::{Add, AddAssign};
+use super::quant::Mode;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Bits {
@@ -72,14 +73,14 @@ impl fmt::Display for Bits {
     }
 }
 
-pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
+pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32, mode: Mode) -> Vec<u8> {
     let mut result = Vec::new();
-
     let mut run_length = 0;
     for (index, num) in squence.iter().enumerate() {
         let mut encode = Bits::new(0, 0);
         if index == 0 {
-            encode = encode_dc(*num - prev_dc);
+            encode = encode_dc(*num - prev_dc, mode);
+            println!("{} {}", num, encode);
         } else {
             // Do not record when encounter 0
             // Only to increase run_length
@@ -90,12 +91,12 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
                 // Note the run_size is up to 15
                 // So if there is more than 15 zeros, emit multiple (15, 0) pairs
                 while run_length > 15 {
-                    let encode = encode_ac(15, 0);
+                    let encode = encode_ac(15, 0, mode);
                     *bits += encode;
                     run_length -= 16;
                 }
                 // After encode zeros, we can now encode this non-zero number
-                encode = encode_ac(run_length, *num);
+                encode = encode_ac(run_length, *num, mode);
                 run_length = 0;
             }
         }
@@ -105,7 +106,7 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
     }
     // End of Block: rl/size = 0/0
     if run_length != 0 {
-        *bits += encode_ac(0, 0);
+        *bits += encode_ac(0, 0, mode);
         let mut last_byte = bits.dump();
         result.append(&mut last_byte);
     }
@@ -113,10 +114,10 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32) -> Vec<u8> {
     result
 }
 
-fn encode_dc(dc: i32) -> Bits {
+fn encode_dc(dc: i32, mode: Mode) -> Bits {
     // Huffman-coded sysmbol1
     let amplitude = get_abs_bit_conut(dc) as u8;
-    let codeword = LUMINANCE_DC_TABLE.get(&amplitude);
+    let codeword = if mode == Mode::Luminance {LUMINANCE_DC_TABLE.get(&amplitude)} else {CHROMINANCE_DC_TABLE.get(&amplitude)};
     // Row sysmbol2
     let ones_complements = get_ones_complements(dc);
     if let Some(codeword) = codeword {
@@ -126,11 +127,11 @@ fn encode_dc(dc: i32) -> Bits {
     }
 }
 
-fn encode_ac(run_length: u8, ac: i32) -> Bits {
+fn encode_ac(run_length: u8, ac: i32, mode: Mode) -> Bits {
     // Huffman-coded sysmbo1
     let size = get_abs_bit_conut(ac) as u8;
     let symbol1 = run_length << 4 | size;
-    let codeword = LUMINANCE_AC_TABLE.get(&symbol1);
+    let codeword = if mode == Mode::Luminance {LUMINANCE_AC_TABLE.get(&symbol1)} else {CHROMINANCE_AC_TABLE.get(&symbol1)};
     // Row sysmbo2
     let ones_complements = get_ones_complements(ac);
     if let Some(codeword) = codeword {
@@ -145,7 +146,7 @@ fn to_highest_pos(length: u8, bits: u32) -> u32 {
 }
 
 fn get_lowest_n_bits(length: u8, bits: u8) -> u8 {
-    bits & (2_u8.pow(length as u32) - 1)
+    bits & (2_u16.pow(length as u32) - 1) as u8
 }
 
 fn get_abs_bit_conut(num: i32) -> u32 {
@@ -164,7 +165,7 @@ mod tests {
     #[test]
     fn test_encode_dc() {
         assert_eq!(
-            encode_dc(2),
+            encode_dc(2, Mode::Luminance),
             Bits {
                 length: 5,
                 bits: 0b01110000000000000000000000000000
@@ -175,7 +176,7 @@ mod tests {
     #[test]
     fn test_encode_ac() {
         assert_eq!(
-            encode_ac(0, 16),
+            encode_ac(0, 16, Mode::Luminance),
             Bits {
                 length: 10,
                 bits: 0b11010100000000000000000000000000
@@ -186,6 +187,6 @@ mod tests {
     #[test]
     fn test_encode_sequence() {
         let test_sequence = [2, 16, -21, 10, -15, 0, 0, 0, 3, -2, 0];
-        encode(&test_sequence, &mut Bits::new(0, 0), 0);
+        encode(&test_sequence, &mut Bits::new(0, 0), 0, Mode::Luminance);
     }
 }
