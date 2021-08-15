@@ -1,10 +1,6 @@
 use lazy_static::lazy_static;
 
-#[derive(PartialEq, Clone, Copy)]
-pub enum Mode {
-    Luminance,
-    Chromiance,
-}
+use super::jpeg::Mode;
 
 lazy_static! {
     pub static ref QUANT_TABLE: [[[u8; 8]; 8]; 2] = {

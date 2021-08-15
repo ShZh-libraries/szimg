@@ -2,7 +2,7 @@ use super::huffman::{LUMINANCE_AC_TABLE, LUMINANCE_DC_TABLE, CHROMINANCE_AC_TABL
 
 use std::fmt;
 use std::ops::{Add, AddAssign};
-use super::quant::Mode;
+use super::jpeg::Mode;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Bits {
@@ -80,7 +80,6 @@ pub fn encode(squence: &[i32], bits: &mut Bits, prev_dc: i32, mode: Mode) -> Vec
         let mut encode = Bits::new(0, 0);
         if index == 0 {
             encode = encode_dc(*num - prev_dc, mode);
-            println!("{} {}", num, encode);
         } else {
             // Do not record when encounter 0
             // Only to increase run_length

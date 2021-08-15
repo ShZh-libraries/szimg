@@ -4,7 +4,7 @@ use super::dct::get_dct;
 use super::huffman::{
     CHROMINANCE_AC_SPEC, CHROMINANCE_DC_SPEC, LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC,
 };
-use super::quant::{QUANT_TABLE, quant, Mode};
+use super::quant::{quant, QUANT_TABLE};
 use super::rle::{encode, Bits};
 
 // Pre-defxined zig-zag order index for array
@@ -41,7 +41,6 @@ struct DQT {
     // quant_table: [[[u8; 8]; 8]; 2]
 }
 
-// TODO: RGB
 struct SOF0 {
     depth: u8,
     width: u16,
@@ -50,7 +49,6 @@ struct SOF0 {
 }
 
 // Huffman tables
-// TODO: RGB
 struct DHT {
     component: u8,
     // The following field is imported from `huffman` module
@@ -97,6 +95,12 @@ impl JPEG {
             },
         }
     }
+}
+
+#[derive(PartialEq, Clone, Copy)]
+pub enum Mode {
+    Luminance,
+    Chromiance,
 }
 
 impl Serializable for JPEG {
@@ -258,7 +262,7 @@ impl SOS {
         let (mut prev_Y_dc, mut prev_cb_dc, mut prev_cr_dc) = (0, 0, 0);
         let mut bits = Bits::new(0, 0);
 
-        // Y blocks: 16 x 16 (which will be then divided into 4 4x4 blocks)
+        // Y blocks: 16 x 16 (which will be then divided into 4 8x8 blocks)
         // Cb blocks: 8 x 8
         // Cr blocks: 8 x 8
         for start_y in (0..self.height).step_by(16) {
@@ -268,12 +272,30 @@ impl SOS {
                     self.convert_rgb_block_to_ycbcr(start_x.into(), start_y.into());
                 // divide 16x16 blocks into 4 4x4 blocks
                 for index in 0..4 {
-                    dump_bytes(y_blocks[index], bytes, &mut bits, &mut prev_Y_dc, Mode::Luminance);
+                    dump_bytes(
+                        y_blocks[index],
+                        bytes,
+                        &mut bits,
+                        &mut prev_Y_dc,
+                        Mode::Luminance,
+                    );
                 }
                 let subsampled_cb_block = subsampling(cb_blocks);
-                dump_bytes(subsampled_cb_block, bytes, &mut bits, &mut prev_cb_dc, Mode::Chromiance);
+                dump_bytes(
+                    subsampled_cb_block,
+                    bytes,
+                    &mut bits,
+                    &mut prev_cb_dc,
+                    Mode::Chromiance,
+                );
                 let subsampled_cr_block = subsampling(cr_blocks);
-                dump_bytes(subsampled_cr_block, bytes, &mut bits, &mut prev_cr_dc, Mode::Chromiance);
+                dump_bytes(
+                    subsampled_cr_block,
+                    bytes,
+                    &mut bits,
+                    &mut prev_cr_dc,
+                    Mode::Chromiance,
+                );
             }
         }
 
@@ -333,6 +355,7 @@ impl SOS {
                 let block_start_y = std::cmp::min(start_y + y, self.height as usize - 1);
                 let block_start_x = std::cmp::min(start_x + x, self.width as usize - 1);
 
+                // The origin data
                 let index = (2 * y + x) / 8;
                 let (y_block, cb_block, cr_block) =
                     self.get_block_ycbcr(block_start_x, block_start_y);
@@ -346,7 +369,13 @@ impl SOS {
     }
 }
 
-fn dump_bytes(block: [i32; 64], bytes: &mut Vec<u8>, bits: &mut Bits, prev_dc: &mut i32, mode: Mode) {
+fn dump_bytes(
+    block: [i32; 64],
+    bytes: &mut Vec<u8>,
+    bits: &mut Bits,
+    prev_dc: &mut i32,
+    mode: Mode,
+) {
     // DCT -> ZigZag -> Quantization -> Huffman
     let dct = get_dct(block);
     let zig_zag = to_zig_zag(dct);
@@ -385,9 +414,7 @@ impl Serializable for SOS {
             bytes.extend([0x01, 0x01, 0x00, 0x00, 0x3f, 0x00]);
             bits = self.process_gray_scale_blocks(&mut bytes);
         } else {
-            bytes.extend([
-                0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00,
-            ]);
+            bytes.extend([0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00]);
             bits = self.process_rgba_blocks(&mut bytes);
         }
 
