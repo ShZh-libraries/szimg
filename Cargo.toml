@@ -7,6 +7,22 @@ edition = "2018"
 name = "tiny_img"
 path = "src/lib.rs"
 
+[[tests]]
+name = "netpbm_test"
+path = "tests/netpbm_test.rs"
+
+[[tests]]
+name = "png_test"
+path = "tests/png_test.rs"
+
+[[tests]]
+name = "jpeg_test"
+path = "tests/jpeg_test.rs"
+
+[[bench]]
+name = "benchmark"
+path = "benchs/main.rs"
+
 [[example]]
 name = "mandlebrot_set"
 path = "examples/mandlebrot.rs"
