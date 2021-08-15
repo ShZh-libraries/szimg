@@ -1,11 +1,12 @@
 use super::{Image, Serializable};
 
+use super::common::Bits;
 use super::dct::get_dct;
 use super::huffman::{
     CHROMINANCE_AC_SPEC, CHROMINANCE_DC_SPEC, LUMINANCE_AC_SPEC, LUMINANCE_DC_SPEC,
 };
 use super::quant::{quant, QUANT_TABLE};
-use super::rle::{encode, Bits};
+use super::rle::encode;
 
 // Pre-defxined zig-zag order index for array
 const ZIG_ZAG_ORDER: [usize; 64] = [

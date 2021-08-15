@@ -1,8 +1,9 @@
+mod common;
 mod dct;
-mod huffman;
-mod jpeg;
 mod quant;
+mod huffman;
 mod rle;
+mod jpeg;
 
 use super::{Image, Serializable};
 use jpeg::JPEG;

@@ -1,4 +1,4 @@
-use super::rle::Bits;
+use super::common::Bits;
 
 use lazy_static::lazy_static;
 
