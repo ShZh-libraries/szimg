@@ -13,11 +13,11 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-# Test files created by author
-test*
-
 # Vscode folder
 .vscode/
 
 # Store test image for maintainer
 image/
+
+tests/output/*
+!tests/output/.gitkeep
