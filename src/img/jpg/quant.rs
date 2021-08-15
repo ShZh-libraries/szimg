@@ -65,7 +65,7 @@ fn quant_intern(g: [f64; QUANT_TABLE_SIZE], quant_table: &QuantTable) -> [i32; Q
     for y in 0..QUANT_TABLE_HEIGHT {
         for x in 0..QUANT_TABLE_WIDTH {
             result[y * QUANT_TABLE_WIDTH + x] = (g[y * QUANT_TABLE_WIDTH + x] as f64
-                / (LUMINANCE_QUANT_TABLE[y][x] as i32) as f64)
+                / (quant_table[y][x] as i32) as f64)
                 .round() as i32;
         }
     }
