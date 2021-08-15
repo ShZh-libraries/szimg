@@ -1,6 +1,10 @@
 pub mod netpbm;
 pub mod png;
 pub mod jpg;
+pub mod gif;
+pub mod bmp;
+pub mod tiff;
+pub mod avif;
 
 use std::error::Error;
 use std::fs::File;
