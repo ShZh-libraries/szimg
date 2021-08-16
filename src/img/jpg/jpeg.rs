@@ -11,13 +11,13 @@ use super::rle::encode;
 // Pre-defxined zig-zag order index for array
 const ZIG_ZAG_ORDER: [usize; 64] = [
     0, 1, 8, 16, 9, 2, 3, 10,
-	17, 24, 32, 25, 18, 11, 4, 5,
-	12, 19, 26, 33, 40, 48, 41, 34,
-	27, 20, 13, 6, 7, 14, 21, 28,
-	35, 42, 49, 56, 57, 50, 43, 36,
-	29, 22, 15, 23, 30, 37, 44, 51,
-	58, 59, 52, 45, 38, 31, 39, 46,
-	53, 60, 61, 54, 47, 55, 62, 63,
+    17, 24, 32, 25, 18, 11, 4, 5,
+    12, 19, 26, 33, 40, 48, 41, 34,
+    27, 20, 13, 6, 7, 14, 21, 28,
+    35, 42, 49, 56, 57, 50, 43, 36,
+    29, 22, 15, 23, 30, 37, 44, 51,
+    58, 59, 52, 45, 38, 31, 39, 46,
+    53, 60, 61, 54, 47, 55, 62, 63,
 ];
 
 pub struct JPEG {
@@ -394,12 +394,12 @@ fn dump_bytes(
 
 fn subsampling(data: [[i32; 64]; 4]) -> [i32; 64] {
     let mut result = [0; 64];
-    const indexes_in_block: [usize; 64] = [
-        0, 2, 4, 6, 0, 2, 4, 6,
+    const INDEXES_IN_BLOCK: [usize; 64] = [
+        0,  2,  4,  6,  0,  2,  4,  6,
         16, 18, 20, 22, 16, 18, 20, 22,
         32, 34, 36, 38, 32, 34, 36, 38,
         48, 50, 52, 54, 48, 50, 52, 54,
-        0, 2, 4, 6, 0, 2, 4, 6,
+        0,  2,  4,  6,  0,  2,  4,  6,
         16, 18, 20, 22, 16, 18, 20, 22,
         32, 34, 36, 38, 32, 34, 36, 38,
         48, 50, 52, 54, 48, 50, 52, 54,
@@ -408,7 +408,7 @@ fn subsampling(data: [[i32; 64]; 4]) -> [i32; 64] {
     for y in 0..8 {
         for x in 0..8 {
             let block_index = 2 * (y / 4) + x / 4;
-            let index_block = indexes_in_block[y * 8 + x];
+            let index_block = INDEXES_IN_BLOCK[y * 8 + x];
             result[y * 8 + x] = (data[block_index][index_block]
                 + data[block_index][index_block + 1]
                 + data[block_index][index_block + 8]
