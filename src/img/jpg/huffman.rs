@@ -99,5 +99,5 @@ lazy_static! {
     pub static ref LUMINANCE_AC_TABLE: HashMap<u8, Bits> =
         generate_huffman_table(&LUMINANCE_AC_SPEC);
     pub static ref CHROMINANCE_AC_TABLE: HashMap<u8, Bits> =
-        generate_huffman_table(&CHROMINANCE_DC_SPEC);
+        generate_huffman_table(&CHROMINANCE_AC_SPEC);
 }
