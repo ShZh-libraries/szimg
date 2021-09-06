@@ -83,7 +83,7 @@ For more exmaples you can check the test folder. In the near future the cargo do
 - [x] PNG
 - [x] JPEG
 - [ ] GIF
-- [ ] BMP
+- [x] BMP
 - [ ] TIFF
 - [ ] AVIF
 
