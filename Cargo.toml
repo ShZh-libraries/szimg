@@ -19,6 +19,10 @@ path = "tests/png_test.rs"
 name = "jpeg_test"
 path = "tests/jpeg_test.rs"
 
+[[tests]]
+name = "bmp_test"
+path = "tests/bmp_test.rs"
+
 [[bench]]
 name = "benchmark"
 path = "benchs/main.rs"
